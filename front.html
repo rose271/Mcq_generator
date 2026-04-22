@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="container">
+    <form class="main_form">
+
+        <div class="section">
+            <span class="section-title">Institute Info</span>
+
+            <input type="text" name="institute_name" placeholder="Name of Institution">
+            <input type="text" name="course_name" placeholder="Course Code - Course Name">
+            <input type="text" name="exam_title" placeholder="Exam Description">
+
+            <span class="section-title">Create Question</span>
+            
+
+            <input type="file" name="question_file">
+
+            <input type="number" name="set_number"
+                   placeholder="Number of sets (e.g. 1, 2, 3...)"
+                   min="1">
+
+            <input type="number" name="question_number"
+                   placeholder="Questions per set"
+                   min="1">
+
+            <div class="field">
+            <label>Difficulty Level</label>
+            <div class="pill-group">
+              <input type="radio" name="difficulty" id="easy" value="Easy" checked>
+              <label for="easy" class="pill">Easy</label>
+
+              <input type="radio" name="difficulty" id="medium" value="Medium">
+              <label for="medium" class="pill">Medium</label>
+
+              <input type="radio" name="difficulty" id="hard" value="Hard">
+              <label for="hard" class="pill">Hard</label>
+            </div>
+          </div>
+
+            <button type="submit">Create PDF</button>
+     </div>
+    </form>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,174 @@
+/* ========== RESET ========== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Times New Roman', Times, serif;
+
+}
+
+/* ========== BODY ========== */
+body {
+    background: linear-gradient(135deg, #5b628a, #2f3553);
+    min-height: 100vh;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ========== WRAPPER ========== */
+.container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+/* ========== MAIN FORM ========== */
+.main_form {
+    width: 450px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* ========== SECTIONS (CARD STYLE) ========== */
+.section {
+    background: rgba(43, 50, 79, 0.97);
+    border-radius: 16px;
+    padding: 25px;
+    color: white;
+
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(15px);
+
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* section title */
+.section-title {
+    font-size: 17px;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #b9bfdc;
+    margin-bottom: 8px;
+}
+
+/* ========== INPUTS ========== */
+input,
+select {
+    width: 100%;
+    height: 42px;
+    padding: 10px;
+
+    border-radius: 10px;
+    border: none;
+    outline: none;
+
+    background: rgba(33, 39, 62, 0.85);
+    color: white;
+    font-size: 14px;
+
+    transition: all 0.25s ease;
+}
+
+/* focus */
+input:focus,
+select:focus {
+    outline: 2px solid #f4c017;
+    background: rgba(45, 52, 80, 0.95);
+}
+
+/* placeholder */
+::placeholder {
+    color: #aab0c5;
+}
+
+/* file input */
+input[type="file"] {
+    height: auto;
+    padding: 10px;
+    cursor: pointer;
+}
+
+/* ========== LABELS ========== */
+label {
+    font-size: 14px;
+    color: #d3d7ea;
+}
+
+/* ========== BUTTON ========== */
+button {
+    width: 100%;
+    height: 48px;
+
+    background: linear-gradient(135deg, #f4c017, #ffda4d);
+    color: #1e1e1e;
+
+    border: none;
+    border-radius: 12px;
+
+    font-weight: bold;
+    font-size: 15px;
+
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+/* hover */
+button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(244, 192, 23, 0.3);
+}
+
+/* click */
+button:active {
+    transform: scale(0.98);
+}
+
+/* ========== RADIO (PILLS) ========== */
+.pill-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* hide radio */
+.pill-group input {
+    display: none;
+}
+
+/* pill style */
+.pill {
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(33, 39, 62, 0.85);
+    color: #cfd3ea;
+    font-size: 15px;
+
+    cursor: pointer;
+    transition: 0.2s ease;
+    border: 1px solid transparent;
+}
+
+/* hover */
+.pill:hover {
+    border-color: #f4c017;
+}
+
+.pill-group input:checked + .pill {
+    background: #f4c017;
+    color: #1e1e1e;
+    font-weight: bold;
+}
+
+/* small field wrapper fix */
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
