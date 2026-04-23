@@ -172,3 +172,24 @@ button:active {
     gap: 8px;
 }
 
+.custom-file-upload {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background: rgba(33, 39, 62, 0.85);
+    border: 2px dashed #5b628a;
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.custom-file-upload:hover {
+    border-color: #f4c017;
+    background: rgba(45, 52, 80, 0.95);
+}
+
+#file-label-text {
+    font-weight: bold;
+    color: #aab0c5;
+}

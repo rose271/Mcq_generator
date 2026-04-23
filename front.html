@@ -22,7 +22,12 @@
             <span class="section-title">Create Question</span>
             
 
-            <input type="file" name="question_file">
+           <div class="field">
+    <label for="question_file" class="custom-file-upload">
+        <span id="file-label-text">Upload Question File</span>
+    </label>
+    <input type="file" name="question_file" id="question_file" style="display: none;">
+</div>
 
             <input type="number" name="set_number"
                    placeholder="Number of sets (e.g. 1, 2, 3...)"
@@ -51,6 +56,6 @@
     </form>
 
 </div>
-
+<script src="script.js"></script>
 </body>
 </html>
