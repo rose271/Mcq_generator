@@ -9,6 +9,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static(__dirname));
 
 // Add this ↓
 
