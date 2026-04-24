@@ -3,59 +3,236 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MCQ Generator</title>
+    <title>Question Paper Generator · IIT-JU</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<div class="container">
-    <form class="main_form">
+<!-- ═══════════════════════════════════════════════════════════
+     BACKGROUND DECORATION
+═══════════════════════════════════════════════════════════════ -->
+<div class="bg-orb orb-1"></div>
+<div class="bg-orb orb-2"></div>
+<div class="grid-overlay"></div>
 
-        <div class="section">
-            <span class="section-title">Institute Info</span>
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE LAYOUT
+═══════════════════════════════════════════════════════════════ -->
+<div class="page-wrap">
 
-            <input type="text" name="institute_name" placeholder="Name of Institution">
-            <input type="text" name="course_name" placeholder="Course Code - Course Name">
-            <input type="text" name="exam_title" placeholder="Exam Description">
-
-            <span class="section-title">Create Question</span>
-            
-
-           <div class="field">
-    <label for="question_file" class="custom-file-upload">
-        <span id="file-label-text">Upload Question File</span>
-    </label>
-    <input type="file" name="question_file" id="question_file" style="display: none;">
-</div>
-
-            <input type="number" name="set_number"
-                   placeholder="Number of sets (e.g. 1, 2, 3...)"
-                   min="1">
-
-            <input type="number" name="question_number"
-                   placeholder="Questions per set"
-                   min="1">
-
-            <div class="field">
-            <label class="title">Difficulty Level</label>
-            <div class="pill-group">
-              <input type="radio" name="difficulty" id="easy" value="Easy" checked>
-              <label for="easy" class="pill">Easy</label>
-
-              <input type="radio" name="difficulty" id="medium" value="Medium">
-              <label for="medium" class="pill">Medium</label>
-
-              <input type="radio" name="difficulty" id="hard" value="Hard">
-              <label for="hard" class="pill">Hard</label>
+    <!-- ── SIDEBAR (static info) ── -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">Q</div>
+            <div>
+                <div class="brand-name">QuestionForge</div>
+                <div class="brand-sub">IIT-JU · Exam Tool</div>
             </div>
-          </div>
+        </div>
 
-            <button type="submit">Create PDF</button>
-     </div>
-    </form>
+        <div class="sidebar-info">
+            <div class="info-block">
+                <div class="info-label">HOW IT WORKS</div>
+                <ol class="how-list">
+                    <li>Fill institute info</li>
+                    <li>Upload your Excel file</li>
+                    <li>Configure question groups</li>
+                    <li>Download PDF sets</li>
+                </ol>
+            </div>
 
+            <div class="info-block">
+                <div class="info-label">EXCEL FORMAT</div>
+                <div class="excel-preview">
+                    <div class="excel-row header-row">
+                        <span>Question</span><span>CLO</span><span>Marks</span>
+                    </div>
+                    <div class="excel-row">
+                        <span>Define flip-flop…</span><span>CLO1</span><span>3</span>
+                    </div>
+                    <div class="excel-row">
+                        <span>Draw K-map for…</span><span>CLO2</span><span>5</span>
+                    </div>
+                    <div class="excel-row">
+                        <span>Simplify using…</span><span>CLO3</span><span>4</span>
+                    </div>
+                </div>
+                <p class="excel-note">Columns: <strong>Question</strong>, <strong>CLO</strong>, <strong>Marks</strong><br>Supports .xlsx and .xls</p>
+            </div>
+
+            <div class="info-block">
+                <div class="info-label">CLO SYSTEM</div>
+                <div class="clo-tags">
+                    <span class="clo-tag">CLO1 · Knowledge</span>
+                    <span class="clo-tag">CLO2 · Analysis</span>
+                    <span class="clo-tag">CLO3 · Design</span>
+                    <span class="clo-tag">CLO4 · Evaluation</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ── MAIN FORM ── -->
+    <main class="main-area">
+        <div class="main-header">
+            <h1 class="page-title">Question Paper Generator</h1>
+            <p class="page-subtitle">Create unique, CLO-balanced exam sets in one click</p>
+        </div>
+
+        <form id="mainForm">
+
+            <!-- ╔══════════════════════════════════════╗
+                 ║  SECTION 1 · INSTITUTE INFO          ║
+                 ╚══════════════════════════════════════╝ -->
+            <div class="card">
+                <div class="card-label">
+                    <span class="card-num">01</span>
+                    <span>Institute Information</span>
+                </div>
+
+                <div class="field-row">
+                    <div class="field">
+                        <label>Institution Name</label>
+                        <input type="text" name="institute_name"
+                               value="Institute of Information Technology, Jahangirnagar University"
+                               placeholder="Full institution name">
+                    </div>
+                </div>
+
+                <div class="field-row col-2">
+                    <div class="field">
+                        <label>Course Code & Name</label>
+                        <input type="text" name="course_name"
+                               placeholder="e.g. ICT 2103 – Digital Logic Design">
+                    </div>
+                    <div class="field">
+                        <label>Exam Title</label>
+                        <input type="text" name="exam_title"
+                               placeholder="e.g. Semester Final Examination 2023">
+                    </div>
+                </div>
+
+                <div class="field-row col-2">
+                    <div class="field">
+                        <label>Full Marks</label>
+                        <input type="number" name="full_marks" value="84" min="1">
+                    </div>
+                    <div class="field">
+                        <label>Exam Duration</label>
+                        <input type="text" name="exam_time" value="3 Hours"
+                               placeholder="e.g. 3 Hours">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ╔══════════════════════════════════════╗
+                 ║  SECTION 2 · QUESTION FILE           ║
+                 ╚══════════════════════════════════════╝ -->
+            <div class="card">
+                <div class="card-label">
+                    <span class="card-num">02</span>
+                    <span>Question Bank (Excel)</span>
+                </div>
+
+                <div class="upload-zone" id="uploadZone">
+                    <input type="file" id="question_file" name="question_file"
+                           accept=".xlsx,.xls" style="display:none">
+                    <div class="upload-icon">📊</div>
+                    <div class="upload-text" id="uploadText">
+                        <strong>Click to upload</strong> or drag & drop your Excel file
+                    </div>
+                    <div class="upload-hint">Accepted: .xlsx, .xls</div>
+                </div>
+            </div>
+
+            <!-- ╔══════════════════════════════════════╗
+                 ║  SECTION 3 · SET CONFIG              ║
+                 ╚══════════════════════════════════════╝ -->
+            <div class="card">
+                <div class="card-label">
+                    <span class="card-num">03</span>
+                    <span>Set Configuration</span>
+                </div>
+
+                <div class="field-row col-2">
+                    <div class="field">
+                        <label>Number of Sets</label>
+                        <input type="number" name="set_number" id="setNumber"
+                               value="3" min="1" max="26"
+                               placeholder="How many unique sets?">
+                    </div>
+                    <div class="field">
+                        <label>Starting Set Label</label>
+                        <select name="set_start" id="setStart">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Preview badges showing which sets will be created -->
+                <div class="set-preview-wrap">
+                    <div class="set-preview-label">Sets that will be created:</div>
+                    <div class="set-preview" id="setPreview"></div>
+                </div>
+            </div>
+
+            <!-- ╔══════════════════════════════════════╗
+                 ║  SECTION 4 · QUESTION GROUPS         ║
+                 ╚══════════════════════════════════════╝ -->
+            <div class="card">
+                <div class="card-label">
+                    <span class="card-num">04</span>
+                    <span>Question Groups &amp; Mark Patterns</span>
+                </div>
+
+                <p class="card-desc">
+                    Each row below is one question group (e.g. "Question 1").
+                    In <strong>Mark Pattern</strong>, enter the marks for each sub-question
+                    separated by <code>+</code>.
+                    <br>Example: <code>3+4+5</code> creates 3 sub-questions worth 3, 4 and 5 marks.
+                </p>
+
+                <!-- Column headers -->
+                <div class="group-header-row">
+                    <span class="gh-num">#</span>
+                    <span class="gh-pattern">Mark Pattern <small>(sub-question marks)</small></span>
+                    <span class="gh-total">Total</span>
+                    <span class="gh-remove"></span>
+                </div>
+
+                <!-- Dynamic rows injected here -->
+                <div id="groupsContainer"></div>
+
+                <!-- Add group button -->
+                <button type="button" class="btn-add" id="addGroupBtn">
+                    <span class="plus">+</span> Add Question Group
+                </button>
+
+                <!-- Grand total display -->
+                <div class="grand-total-row">
+                    <span>Grand Total Marks:</span>
+                    <span id="grandTotal" class="grand-val">0</span>
+                </div>
+            </div>
+
+            <!-- ╔══════════════════════════════════════╗
+                 ║  SUBMIT                              ║
+                 ╚══════════════════════════════════════╝ -->
+            <button type="submit" class="btn-submit" id="submitBtn">
+                <span class="btn-icon">⬇</span>
+                <span class="btn-text">Generate &amp; Download PDFs</span>
+            </button>
+
+        </form>
+
+        <!-- Download links appear here after generation -->
+        <div id="downloadArea" class="download-area" style="display:none"></div>
+
+    </main>
 </div>
+
 <script src="script.js"></script>
 </body>
 </html>
