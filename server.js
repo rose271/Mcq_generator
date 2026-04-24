@@ -198,22 +198,25 @@ app.post('/generate-questions', upload.single('question_file'), (req, res) => {
                 }
 
                 const rowY = doc.y;
+                const questionStr = `${i + 1}.  ${q.text}`;
 
-                // Question number + text (left column)
-                doc.fontSize(11).font('Helvetica').fillColor('#000000')
-                   .text(`${i + 1}.  ${q.text}`, MARGIN, rowY, {
-                       width:  Q_W,
-                       lineGap: 2
-                   });
+                // Set font before measuring so heightOfString uses correct metrics
+                doc.fontSize(11).font('Helvetica');
+                const textHeight = doc.heightOfString(questionStr, { width: Q_W, lineGap: 2 });
 
-                // CLO label (right column) — aligned to top of row, bold, black, in brackets
+                // Question text (left column)
+                doc.fillColor('#000000')
+                   .text(questionStr, MARGIN, rowY, { width: Q_W, lineGap: 2 });
+
+                // CLO label (right column) - pinned to same rowY
                 doc.fontSize(11).font('Helvetica-Bold').fillColor('#000000')
                    .text(`[${q.cloDisplay}]`, MARGIN + Q_W + 15, rowY, {
                        width: CLO_W,
                        align: 'right'
                    });
 
-                doc.moveDown(0.8);
+                // Advance by measured height + consistent gap (no extra space)
+                doc.y = rowY + textHeight + 10;
             });
         });
 
