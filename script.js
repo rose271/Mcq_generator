@@ -275,7 +275,7 @@ form.addEventListener('submit', async (e) => {
             // automatically with the correct multipart boundary.
         });
 
-        const result = await response.json();
+        const contentType = response.headers.get('Content-Type') || '';
 
         if (!result.success) {
             showToast('Server error: ' + result.error, 'error');
