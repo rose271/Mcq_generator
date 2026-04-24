@@ -25,8 +25,8 @@ form.addEventListener('submit', async (e) => {
     submitBtn.innerText = "Generating...";
     submitBtn.disabled = true;
 
-    try {
-        const response = await fetch('http://localhost:5000/generate-questions', {
+    try { 
+          const response = await fetch('/generate-questions', {
             method: 'POST',
             body: formData
         });
