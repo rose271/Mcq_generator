@@ -10,6 +10,9 @@ const upload = multer({ storage: multer.memoryStorage() });
 app.use(cors());
 app.use(express.json());
 
+// ---------------------------------------------------------------------------
+// Helper: shuffle an array in place (Fisher-Yates)
+// ---------------------------------------------------------------------------
 function shuffle(arr) {
     for (let i = arr.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -18,12 +21,18 @@ function shuffle(arr) {
     return arr;
 }
 
+// ---------------------------------------------------------------------------
+// Helper: find a column key case-insensitively (also trims whitespace)
+// ---------------------------------------------------------------------------
 function findKey(row, ...names) {
     return Object.keys(row).find(k =>
         names.includes(k.trim().toLowerCase())
     );
 }
 
+// ---------------------------------------------------------------------------
+// POST /generate-questions
+// ---------------------------------------------------------------------------
 app.post('/generate-questions', upload.single('question_file'), (req, res) => {
     try {
         const numSets  = Math.max(1, parseInt(req.body.set_number)      || 1);
@@ -42,7 +51,8 @@ app.post('/generate-questions', upload.single('question_file'), (req, res) => {
             return res.status(400).json({ error: 'The uploaded file appears to be empty.' });
         }
 
-        const QUESTION_KEYS   = ['question', 'short_questions', 'short_question'];
+        // Accepted column name variants (all lowercase after trim)
+        const QUESTION_KEYS   = ['question', 'short_questions', 'short_question', 'short questions'];
         const CLO_KEYS        = ['clo'];
         const DIFFICULTY_KEYS = ['difficulty'];
 
@@ -54,22 +64,25 @@ app.post('/generate-questions', upload.single('question_file'), (req, res) => {
             const cloKey  = findKey(row, ...CLO_KEYS);
             const diffKey = findKey(row, ...DIFFICULTY_KEYS);
 
-            const questionText = qKey   ? String(row[qKey]).trim()   : '';
-            const rawClo       = cloKey ? String(row[cloKey]).trim() : 'General';
-            const clo          = rawClo.replace(/\s+/g, '');
+            const questionText = qKey    ? String(row[qKey]).trim()    : '';
+            // Keep original CLO label for display (e.g. "CLO 1")
+            const rawClo       = cloKey  ? String(row[cloKey]).trim()  : 'General';
+            const cloDisplay   = rawClo;                        // "CLO 1"  shown in PDF
+            const cloKey2      = rawClo.replace(/\s+/g, '');   // "CLO1"   used as pool key
             const rowDiff      = diffKey ? String(row[diffKey]).trim().toLowerCase() : '';
 
             if (!questionText) return;
 
-            allQuestions.push({ text: questionText, clo });
+            allQuestions.push({ text: questionText, clo: cloKey2, cloDisplay });
 
             if (!selectedDifficulty || rowDiff === selectedDifficulty) {
-                if (!filteredPool[clo]) filteredPool[clo] = [];
-                filteredPool[clo].push({ text: questionText, clo });
+                if (!filteredPool[cloKey2]) filteredPool[cloKey2] = [];
+                filteredPool[cloKey2].push({ text: questionText, clo: cloKey2, cloDisplay });
             }
         });
 
-        const cloList = Object.keys(filteredPool);
+        // Sort CLO keys so CLO1 < CLO2 < CLO3
+        const cloList = Object.keys(filteredPool).sort();
 
         if (cloList.length === 0) {
             const diffLabel = selectedDifficulty || '(none)';
@@ -80,9 +93,9 @@ app.post('/generate-questions', upload.single('question_file'), (req, res) => {
             });
         }
 
+        // Build master + exhausted pools
         const masterPool = {};
         const exhausted  = {};
-
         cloList.forEach(clo => {
             masterPool[clo] = shuffle([...filteredPool[clo]]);
             exhausted[clo]  = [];
@@ -99,15 +112,18 @@ app.post('/generate-questions', upload.single('question_file'), (req, res) => {
                 const needed = base + (idx < remainder ? 1 : 0);
                 const picked = [];
 
+                // Phase 1: unique pool
                 while (picked.length < needed && masterPool[clo].length > 0) {
                     picked.push(masterPool[clo].pop());
                 }
+                // Phase 2: recycled (reshuffled exhausted)
                 if (picked.length < needed && exhausted[clo].length > 0) {
                     const recycled = shuffle([...exhausted[clo]]);
                     while (picked.length < needed && recycled.length > 0) {
                         picked.push(recycled.pop());
                     }
                 }
+                // Phase 3: random fallback from entire file
                 if (picked.length < needed && allQuestions.length > 0) {
                     const fallback = shuffle([...allQuestions]);
                     while (picked.length < needed) {
@@ -119,6 +135,9 @@ app.post('/generate-questions', upload.single('question_file'), (req, res) => {
                 currentSet.push(...picked);
             });
 
+            // Sort questions by CLO so they appear CLO1, CLO2, CLO3... in the PDF
+            const sortedSet = [...currentSet].sort((a, b) => a.clo.localeCompare(b.clo));
+
             allSets.push({
                 setName: `Set ${String.fromCharCode(65 + s)}`,
                 header: {
@@ -126,27 +145,33 @@ app.post('/generate-questions', upload.single('question_file'), (req, res) => {
                     course:    req.body.course_name    || '',
                     exam:      req.body.exam_title     || ''
                 },
-                questions: shuffle(currentSet)
+                questions: sortedSet
             });
         }
 
-        // Generate PDF
+        // ── PDF Generation ───────────────────────────────────────────────────
         const doc = new PDFDocument({ margin: 50 });
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', 'attachment; filename="question_sets.pdf"');
-
         doc.pipe(res);
+
+        const PAGE_W    = doc.page.width;
+        const MARGIN    = 50;
+        const CONTENT_W = PAGE_W - MARGIN * 2;   // usable width
+        const CLO_W     = 50;                     // reserved width for CLO label on right
+        const Q_W       = CONTENT_W - CLO_W - 15; // question text width
 
         allSets.forEach((set, setIndex) => {
             if (setIndex > 0) doc.addPage();
 
+            // ── Header ───────────────────────────────────────────────────────
             doc.fontSize(16).font('Helvetica-Bold')
                .text(set.header.institute || 'Institute Name', { align: 'center' });
 
             doc.fontSize(12).font('Helvetica')
                .text(`Course: ${set.header.course || 'N/A'}`, { align: 'center' })
-               .text(`Exam: ${set.header.exam || 'N/A'}`, { align: 'center' });
+               .text(`Exam:   ${set.header.exam   || 'N/A'}`, { align: 'center' });
 
             doc.moveDown(0.5);
 
@@ -155,25 +180,40 @@ app.post('/generate-questions', upload.single('question_file'), (req, res) => {
 
             doc.moveDown(0.5);
 
-            doc.moveTo(50, doc.y)
-               .lineTo(doc.page.width - 50, doc.y)
-               .strokeColor('#000000')
-               .stroke();
+            // Horizontal rule
+            doc.moveTo(MARGIN, doc.y)
+               .lineTo(PAGE_W - MARGIN, doc.y)
+               .strokeColor('#000000').stroke();
 
-            doc.moveDown(0.5);
+            doc.moveDown(0.6);
 
-            doc.fontSize(11).font('Helvetica');
+            doc.moveDown(0.2);
 
+            // ── Questions ─────────────────────────────────────────────────────
             set.questions.forEach((q, i) => {
-                if (doc.y > doc.page.height - 100) doc.addPage();
+                // Page-break guard
+                if (doc.y > doc.page.height - 100) {
+                    doc.addPage();
+                    doc.moveDown(0.5);
+                }
 
-                doc.font('Helvetica').fillColor('#000000')
-                   .text(`${i + 1}. ${q.text}`, { width: doc.page.width - 100 });
+                const rowY = doc.y;
 
-                doc.moveDown(0.3);
-        
-                doc.fillColor('#000000');
-                doc.moveDown(0.6);
+                // Question number + text (left column)
+                doc.fontSize(11).font('Helvetica').fillColor('#000000')
+                   .text(`${i + 1}.  ${q.text}`, MARGIN, rowY, {
+                       width:  Q_W,
+                       lineGap: 2
+                   });
+
+                // CLO label (right column) — aligned to top of row, bold, black, in brackets
+                doc.fontSize(11).font('Helvetica-Bold').fillColor('#000000')
+                   .text(`[${q.cloDisplay}]`, MARGIN + Q_W + 15, rowY, {
+                       width: CLO_W,
+                       align: 'right'
+                   });
+
+                doc.moveDown(0.8);
             });
         });
 
