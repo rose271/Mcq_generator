@@ -10,6 +10,16 @@ const upload = multer({ storage: multer.memoryStorage() });
 app.use(cors());
 app.use(express.json());
 
+// Add this ↓
+app.get('/', (req, res) => {
+  res.send('Question Generator API is running ✅');
+});
+
+// Your existing route stays as-is
+app.post('/generate-questions', upload.single('question_file'), (req, res) => {
+  // ...
+});
+
 // ---------------------------------------------------------------------------
 // Helper: shuffle an array in place (Fisher-Yates)
 // ---------------------------------------------------------------------------
