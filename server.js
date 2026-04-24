@@ -31,13 +31,32 @@ function findKey(row, ...names) {
 }
 
 // ---------------------------------------------------------------------------
+// Helper: normalize difficulty values (robust)
+// ---------------------------------------------------------------------------
+function normalizeDifficulty(val) {
+    if (!val) return '';
+    return String(val)
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z]/g, '');
+}
+
+function mapDifficulty(val) {
+    const norm = normalizeDifficulty(val);
+    if (norm.startsWith('e')) return 'easy';
+    if (norm.startsWith('m')) return 'medium';
+    if (norm.startsWith('h')) return 'hard';
+    return '';
+}
+
+// ---------------------------------------------------------------------------
 // POST /generate-questions
 // ---------------------------------------------------------------------------
 app.post('/generate-questions', upload.single('question_file'), (req, res) => {
     try {
         const numSets  = Math.max(1, parseInt(req.body.set_number)      || 1);
         const qsPerSet = Math.max(1, parseInt(req.body.question_number) || 10);
-        const selectedDifficulty = (req.body.difficulty || '').trim().toLowerCase();
+        const selectedDifficulty = mapDifficulty(req.body.difficulty);
 
         if (!req.file) {
             return res.status(400).json({ error: 'No Excel file uploaded.' });
@@ -45,43 +64,69 @@ app.post('/generate-questions', upload.single('question_file'), (req, res) => {
 
         const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
         const sheet    = workbook.Sheets[workbook.SheetNames[0]];
-        const data     = xlsx.utils.sheet_to_json(sheet);
+
+        // FIX: Use defval so empty cells become '' instead of being skipped,
+        // and raw:false so numbers/dates become strings automatically.
+        const data = xlsx.utils.sheet_to_json(sheet, { defval: '', raw: false });
 
         if (!data || data.length === 0) {
             return res.status(400).json({ error: 'The uploaded file appears to be empty.' });
         }
 
-        // Accepted column name variants (all lowercase after trim)
-        const QUESTION_KEYS   = ['question', 'short_questions', 'short_question', 'short questions'];
+        // ── FIX: Detect column keys ONCE from the first row ──────────────────
+        // This prevents findKey from returning different results per row and
+        // also catches headers with invisible unicode/whitespace characters.
+        const firstRow = data[0];
+
+        const QUESTION_KEYS   = ['question', 'short_questions', 'short_question', 'short questions', 'questions'];
         const CLO_KEYS        = ['clo'];
         const DIFFICULTY_KEYS = ['difficulty'];
+
+        const qKeyGlobal    = findKey(firstRow, ...QUESTION_KEYS);
+        const cloKeyGlobal  = findKey(firstRow, ...CLO_KEYS);
+        const diffKeyGlobal = findKey(firstRow, ...DIFFICULTY_KEYS);
+
+        // Debug: log detected column names
+        console.log('Detected columns → question:', qKeyGlobal, '| clo:', cloKeyGlobal, '| difficulty:', diffKeyGlobal);
+        console.log('All headers in file:', Object.keys(firstRow));
+
+        if (!diffKeyGlobal) {
+            return res.status(400).json({
+                error: `Could not find a "Difficulty" column. ` +
+                       `Headers found: ${Object.keys(firstRow).join(', ')}`
+            });
+        }
 
         const allQuestions = [];
         const filteredPool = {};
 
-        data.forEach((row) => {
-            const qKey    = findKey(row, ...QUESTION_KEYS);
-            const cloKey  = findKey(row, ...CLO_KEYS);
-            const diffKey = findKey(row, ...DIFFICULTY_KEYS);
+        data.forEach((row, idx) => {
+            // ── FIX: Use the globally detected keys, not per-row detection ──
+            const questionText = qKeyGlobal    ? String(row[qKeyGlobal]).trim()    : '';
+            const rawClo       = cloKeyGlobal  ? String(row[cloKeyGlobal]).trim()  : 'General';
+            const cloDisplay   = rawClo;
+            const cloKey2      = rawClo.replace(/\s+/g, '');
 
-            const questionText = qKey    ? String(row[qKey]).trim()    : '';
-            // Keep original CLO label for display (e.g. "CLO 1")
-            const rawClo       = cloKey  ? String(row[cloKey]).trim()  : 'General';
-            const cloDisplay   = rawClo;                        // "CLO 1"  shown in PDF
-            const cloKey2      = rawClo.replace(/\s+/g, '');   // "CLO1"   used as pool key
-            const rowDiff      = diffKey ? String(row[diffKey]).trim().toLowerCase() : '';
+            // ── FIX: Read difficulty using the globally detected key ─────────
+            const rawDiff  = row[diffKeyGlobal];
+            const rowDiff  = mapDifficulty(rawDiff);
+
+            // Debug log
+            console.log(`Row ${idx + 1}: rawDiff="${rawDiff}", mapped="${rowDiff}", selectedDifficulty="${selectedDifficulty}"`);
 
             if (!questionText) return;
 
             allQuestions.push({ text: questionText, clo: cloKey2, cloDisplay });
 
-            if (!selectedDifficulty || rowDiff === selectedDifficulty) {
+            // ── FIX: When no difficulty is selected, include ALL questions ───
+            const diffMatches = !selectedDifficulty || rowDiff === selectedDifficulty;
+
+            if (diffMatches) {
                 if (!filteredPool[cloKey2]) filteredPool[cloKey2] = [];
                 filteredPool[cloKey2].push({ text: questionText, clo: cloKey2, cloDisplay });
             }
         });
 
-        // Sort CLO keys so CLO1 < CLO2 < CLO3
         const cloList = Object.keys(filteredPool).sort();
 
         if (cloList.length === 0) {
@@ -158,9 +203,9 @@ app.post('/generate-questions', upload.single('question_file'), (req, res) => {
 
         const PAGE_W    = doc.page.width;
         const MARGIN    = 50;
-        const CONTENT_W = PAGE_W - MARGIN * 2;   // usable width
-        const CLO_W     = 50;                     // reserved width for CLO label on right
-        const Q_W       = CONTENT_W - CLO_W - 15; // question text width
+        const CONTENT_W = PAGE_W - MARGIN * 2;
+        const CLO_W     = 50;
+        const Q_W       = CONTENT_W - CLO_W - 15;
 
         allSets.forEach((set, setIndex) => {
             if (setIndex > 0) doc.addPage();
@@ -186,12 +231,10 @@ app.post('/generate-questions', upload.single('question_file'), (req, res) => {
                .strokeColor('#000000').stroke();
 
             doc.moveDown(0.6);
-
             doc.moveDown(0.2);
 
             // ── Questions ─────────────────────────────────────────────────────
             set.questions.forEach((q, i) => {
-                // Page-break guard
                 if (doc.y > doc.page.height - 100) {
                     doc.addPage();
                     doc.moveDown(0.5);
@@ -200,22 +243,18 @@ app.post('/generate-questions', upload.single('question_file'), (req, res) => {
                 const rowY = doc.y;
                 const questionStr = `${i + 1}.  ${q.text}`;
 
-                // Set font before measuring so heightOfString uses correct metrics
                 doc.fontSize(11).font('Helvetica');
                 const textHeight = doc.heightOfString(questionStr, { width: Q_W, lineGap: 2 });
 
-                // Question text (left column)
                 doc.fillColor('#000000')
                    .text(questionStr, MARGIN, rowY, { width: Q_W, lineGap: 2 });
 
-                // CLO label (right column) - pinned to same rowY
                 doc.fontSize(11).font('Helvetica-Bold').fillColor('#000000')
                    .text(`[${q.cloDisplay}]`, MARGIN + Q_W + 15, rowY, {
                        width: CLO_W,
                        align: 'right'
                    });
 
-                // Advance by measured height + consistent gap (no extra space)
                 doc.y = rowY + textHeight + 10;
             });
         });
