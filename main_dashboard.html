@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EduVault — Dashboard</title>
+  <link rel="stylesheet" href="main_dashboard.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+</head>
+<body>
+
+  <!-- ══ Sidebar ══════════════════════════════════════════════ -->
+  <aside class="sidebar" id="sidebar">
+
+    <!-- Toggle button (always visible) -->
+    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+      <i class="fa-solid fa-bars" id="toggleIcon"></i>
+    </button>
+
+    <!-- Brand -->
+    <div class="sidebar-brand">
+      <div class="brand-icon"><i class="fa-solid fa-book-open-reader"></i></div>
+      <span class="brand-name">Question Maker</span>
+    </div>
+
+    <!-- Nav -->
+    <nav class="sidebar-nav">
+      <span class="nav-label">NAVIGATION</span>
+
+      <a href="#" class="nav-item active" data-tooltip="Dashboard">
+        <i class="fa-solid fa-house"></i>
+        <span class="nav-text">Dashboard</span>
+      </a>
+      <a href="#" class="nav-item" data-tooltip="All Files">
+        <i class="fa-solid fa-folder-open"></i>
+        <span class="nav-text">All Files</span>
+      </a>
+      <a href="#" class="nav-item" data-tooltip="Download History">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+        <span class="nav-text">Download History</span>
+      </a>
+      <a href="#" class="nav-item" data-tooltip="Create Question">
+        <i class="fa-solid fa-circle-plus"></i>
+        <span class="nav-text">Create Question</span>
+      </a>
+      <a href="#" class="nav-item" data-tooltip="Settings">
+        <i class="fa-solid fa-gear"></i>
+        <span class="nav-text">Settings</span>
+      </a>
+    </nav>
+
+    <!-- Footer -->
+    <div class="sidebar-footer">
+      <div class="user-card" data-tooltip="Anannya · Student">
+        <div class="avatar">AN</div>
+        <div class="user-info">
+          <span class="user-name">Anannya</span>
+          <span class="user-role">Student</span>
+        </div>
+        <i class="fa-solid fa-ellipsis-vertical dot-menu"></i>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Overlay for mobile -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+  <!-- ══ Main Content ══════════════════════════════════════════ -->
+  <main class="main-content" id="mainContent">
+
+    <!-- Hero Panel -->
+    <div class="hero-panel">
+      <header class="topbar">
+        <div class="greeting">
+          <h1>Good <span id="timeOfDay">afternoon</span>, <span class="highlight">Anannya</span></h1>
+          <p class="subtext">Here's what's happening with your courses today.</p>
+        </div>
+        <div class="topbar-right">
+          <button class="icon-btn notif-btn" aria-label="Notifications">
+            <i class="fa-solid fa-bell"></i>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="search-wrap">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" id="searchInput" class="search-bar" placeholder="Search courses, files, questions, semester, course code…" />
+      </div>
+    </div>
+
+    <!-- Scrollable body -->
+    <div class="scroll-body">
+
+      <!-- Stats Grid -->
+      <section class="stats-grid">
+        <div class="stat-card" style="--c:#2d6a5e">
+          <div class="stat-icon-wrap"><i class="fa-solid fa-layer-group"></i></div>
+          <div class="stat-body">
+            <span class="stat-value" data-target="12">0</span>
+            <span class="stat-label">Total Courses</span>
+          </div>
+        </div>
+        <div class="stat-card" style="--c:#c9872b">
+          <div class="stat-icon-wrap"><i class="fa-solid fa-file-arrow-up"></i></div>
+          <div class="stat-body">
+            <span class="stat-value" data-target="48">0</span>
+            <span class="stat-label">Files Uploaded</span>
+          </div>
+        </div>
+        <div class="stat-card" style="--c:#6b4fa8">
+          <div class="stat-icon-wrap"><i class="fa-solid fa-file-pdf"></i></div>
+          <div class="stat-body">
+            <span class="stat-value" data-target="27">0</span>
+            <span class="stat-label">PDFs Generated</span>
+          </div>
+        </div>
+        <div class="stat-card" style="--c:#b84040">
+          <div class="stat-icon-wrap"><i class="fa-solid fa-download"></i></div>
+          <div class="stat-body">
+            <span class="stat-value" data-target="134">0</span>
+            <span class="stat-label">Total Downloads</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Courses Section -->
+      <section class="courses-section">
+        <div class="section-header">
+          <h2>My Courses</h2>
+          <div class="filter-tabs">
+            <button class="filter-btn active" data-filter="recent">Recent Files</button>
+            <button class="filter-btn" data-filter="all">All Files</button>
+            <button class="filter-btn create-btn" id="openCreateModal">
+              <i class="fa-solid fa-plus"></i> Create New
+            </button>
+          </div>
+        </div>
+
+        <div class="courses-grid" id="coursesGrid">
+
+          <!-- Card 1 -->
+          <div class="course-card">
+            <div class="card-color-bar" style="--bar:#2d6a5e"></div>
+            <div class="card-top">
+              <span class="course-code">ICT 3102</span>
+            </div>
+            <h3 class="course-title">Operating Systems Lab</h3>
+            <p class="course-desc">Experiments on process scheduling, memory management, and file systems.</p>
+            <div class="card-meta">
+              <span><i class="fa-solid fa-calendar-days"></i> Sem 3</span>
+              <span><i class="fa-solid fa-files"></i> 4 files</span>
+            </div>
+            <button class="show-files-btn">
+              <span class="btn-left">
+                <i class="fa-solid fa-folder-open btn-icon"></i>
+                <span class="btn-text">Show Files</span>
+                <i class="fa-solid fa-chevron-down arrow-icon"></i>
+              </span>
+              <span class="file-count-badge">4 files</span>
+            </button>
+            <div class="files-drawer">
+              <ul class="file-list">
+                <li class="file-item">
+                  <div class="file-icon pdf"><i class="fa-solid fa-file-pdf"></i></div>
+                  <div class="file-info">
+                    <span class="file-name">Lab Report 1 — Process Scheduling.pdf</span>
+                    <span class="file-meta">2.3 MB · Apr 12, 2025</span>
+                  </div>
+                  <div class="file-actions">
+                    <button class="fac-btn" title="Download"><i class="fa-solid fa-download"></i></button>
+                    <button class="fac-btn" title="Preview"><i class="fa-solid fa-eye"></i></button>
+                    <button class="fac-btn danger" title="Delete"><i class="fa-solid fa-trash-can"></i></button>
+                  </div>
+                </li>
+                <li class="file-item">
+                  <div class="file-icon doc"><i class="fa-solid fa-file-word"></i></div>
+                  <div class="file-info">
+                    <span class="file-name">Memory Management Notes.docx</span>
+                    <span class="file-meta">540 KB · Apr 18, 2025</span>
+                  </div>
+                  <div class="file-actions">
+                    <button class="fac-btn" title="Download"><i class="fa-solid fa-download"></i></button>
+                    <button class="fac-btn" title="Preview"><i class="fa-solid fa-eye"></i></button>
+                    <button class="fac-btn danger" title="Delete"><i class="fa-solid fa-trash-can"></i></button>
+                  </div>
+                </li>
+                <li class="file-item">
+                  <div class="file-icon xls"><i class="fa-solid fa-file-excel"></i></div>
+                  <div class="file-info">
+                    <span class="file-name">Scheduling Algorithm Data.xlsx</span>
+                    <span class="file-meta">120 KB · Apr 20, 2025</span>
+                  </div>
+                  <div class="file-actions">
+                    <button class="fac-btn" title="Download"><i class="fa-solid fa-download"></i></button>
+                    <button class="fac-btn" title="Preview"><i class="fa-solid fa-eye"></i></button>
+                    <button class="fac-btn danger" title="Delete"><i class="fa-solid fa-trash-can"></i></button>
+                  </div>
+                </li>
+                <li class="file-item">
+                  <div class="file-icon img"><i class="fa-solid fa-file-image"></i></div>
+                  <div class="file-info">
+                    <span class="file-name">OS Architecture Diagram.png</span>
+                    <span class="file-meta">890 KB · Apr 22, 2025</span>
+                  </div>
+                  <div class="file-actions">
+                    <button class="fac-btn" title="Download"><i class="fa-solid fa-download"></i></button>
+                    <button class="fac-btn" title="Preview"><i class="fa-solid fa-eye"></i></button>
+                    <button class="fac-btn danger" title="Delete"><i class="fa-solid fa-trash-can"></i></button>
+                  </div>
+                </li>
+              </ul>
+              <button class="add-file-inline"><i class="fa-solid fa-plus"></i> Upload File</button>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="course-card">
+            <div class="card-color-bar" style="--bar:#c9872b"></div>
+            <div class="card-top">
+              <span class="course-code">CSE 4101</span>
+              <span class="course-badge active-badge">Active</span>
+            </div>
+            <h3 class="course-title">Data Structures &amp; Algorithms</h3>
+            <p class="course-desc">Arrays, linked lists, trees, graphs, sorting and searching algorithms.</p>
+            <div class="card-meta">
+              <span><i class="fa-solid fa-calendar-days"></i> Sem 4</span>
+              <span><i class="fa-solid fa-files"></i> 6 files</span>
+            </div>
+            <button class="show-files-btn">
+              <span class="btn-left">
+                <i class="fa-solid fa-folder-open btn-icon"></i>
+                <span class="btn-text">Show Files</span>
+                <i class="fa-solid fa-chevron-down arrow-icon"></i>
+              </span>
+              <span class="file-count-badge">6 files</span>
+            </button>
+            <div class="files-drawer">
+              <ul class="file-list">
+                <li class="file-item">
+                  <div class="file-icon pdf"><i class="fa-solid fa-file-pdf"></i></div>
+                  <div class="file-info">
+                    <span class="file-name">Assignment 1 — Arrays &amp; Linked Lists.pdf</span>
+                    <span class="file-meta">1.8 MB · Mar 05, 2025</span>
+                  </div>
+                  <div class="file-actions">
+                    <button class="fac-btn"><i class="fa-solid fa-download"></i></button>
+                    <button class="fac-btn"><i class="fa-solid fa-eye"></i></button>
+                    <button class="fac-btn danger"><i class="fa-solid fa-trash-can"></i></button>
+                  </div>
+                </li>
+                <li class="file-item">
+                  <div class="file-icon pdf"><i class="fa-solid fa-file-pdf"></i></div>
+                  <div class="file-info">
+                    <span class="file-name">Binary Tree Traversal Notes.pdf</span>
+                    <span class="file-meta">760 KB · Mar 14, 2025</span>
+                  </div>
+                  <div class="file-actions">
+                    <button class="fac-btn"><i class="fa-solid fa-download"></i></button>
+                    <button class="fac-btn"><i class="fa-solid fa-eye"></i></button>
+                    <button class="fac-btn danger"><i class="fa-solid fa-trash-can"></i></button>
+                  </div>
+                </li>
+                <li class="file-item">
+                  <div class="file-icon doc"><i class="fa-solid fa-file-word"></i></div>
+                  <div class="file-info">
+                    <span class="file-name">Graph Algorithms Summary.docx</span>
+                    <span class="file-meta">430 KB · Apr 01, 2025</span>
+                  </div>
+                  <div class="file-actions">
+                    <button class="fac-btn"><i class="fa-solid fa-download"></i></button>
+                    <button class="fac-btn"><i class="fa-solid fa-eye"></i></button>
+                    <button class="fac-btn danger"><i class="fa-solid fa-trash-can"></i></button>
+                  </div>
+                </li>
+                <li class="file-item">
+                  <div class="file-icon xls"><i class="fa-solid fa-file-excel"></i></div>
+                  <div class="file-info">
+                    <span class="file-name">Complexity Analysis Sheet.xlsx</span>
+                    <span class="file-meta">210 KB · Apr 07, 2025</span>
+                  </div>
+                  <div class="file-actions">
+                    <button class="fac-btn"><i class="fa-solid fa-download"></i></button>
+                    <button class="fac-btn"><i class="fa-solid fa-eye"></i></button>
+                    <button class="fac-btn danger"><i class="fa-solid fa-trash-can"></i></button>
+                  </div>
+                </li>
+                <li class="file-item">
+                  <div class="file-icon pdf"><i class="fa-solid fa-file-pdf"></i></div>
+                  <div class="file-info">
+                    <span class="file-name">Mid-term Paper 2025.pdf</span>
+                    <span class="file-meta">2.1 MB · Apr 10, 2025</span>
+                  </div>
+                  <div class="file-actions">
+                    <button class="fac-btn"><i class="fa-solid fa-download"></i></button>
+                    <button class="fac-btn"><i class="fa-solid fa-eye"></i></button>
+                    <button class="fac-btn danger"><i class="fa-solid fa-trash-can"></i></button>
+                  </div>
+                </li>
+                <li class="file-item">
+                  <div class="file-icon img"><i class="fa-solid fa-file-image"></i></div>
+                  <div class="file-info">
+                    <span class="file-name">Sorting Comparison Chart.png</span>
+                    <span class="file-meta">540 KB · Apr 15, 2025</span>
+                  </div>
+                  <div class="file-actions">
+                    <button class="fac-btn"><i class="fa-solid fa-download"></i></button>
+                    <button class="fac-btn"><i class="fa-solid fa-eye"></i></button>
+                    <button class="fac-btn danger"><i class="fa-solid fa-trash-can"></i></button>
+                  </div>
+                </li>
+              </ul>
+              <button class="add-file-inline"><i class="fa-solid fa-plus"></i> Upload File</button>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="course-card">
+            <div class="card-color-bar" style="--bar:#6b4fa8"></div>
+            <div class="card-top">
+              <span class="course-code">MATH 3201</span>
+              <span class="course-badge review-badge">Review</span>
+            </div>
+            <h3 class="course-title">Discrete Mathematics</h3>
+            <p class="course-desc">Logic, sets, relations, functions, combinatorics and graph theory basics.</p>
+            <div class="card-meta">
+              <span><i class="fa-solid fa-calendar-days"></i> Sem 3</span>
+              <span><i class="fa-solid fa-files"></i> 3 files</span>
+            </div>
+            <button class="show-files-btn">
+              <span class="btn-left">
+                <i class="fa-solid fa-folder-open btn-icon"></i>
+                <span class="btn-text">Show Files</span>
+                <i class="fa-solid fa-chevron-down arrow-icon"></i>
+              </span>
+              <span class="file-count-badge">3 files</span>
+            </button>
+            <div class="files-drawer">
+              <ul class="file-list">
+                <li class="file-item">
+                  <div class="file-icon pdf"><i class="fa-solid fa-file-pdf"></i></div>
+                  <div class="file-info">
+                    <span class="file-name">Propositional Logic — Chapter 1.pdf</span>
+                    <span class="file-meta">1.2 MB · Feb 22, 2025</span>
+                  </div>
+                  <div class="file-actions">
+                    <button class="fac-btn"><i class="fa-solid fa-download"></i></button>
+                    <button class="fac-btn"><i class="fa-solid fa-eye"></i></button>
+                    <button class="fac-btn danger"><i class="fa-solid fa-trash-can"></i></button>
+                  </div>
+                </li>
+                <li class="file-item">
+                  <div class="file-icon doc"><i class="fa-solid fa-file-word"></i></div>
+                  <div class="file-info">
+                    <span class="file-name">Set Theory Exercises.docx</span>
+                    <span class="file-meta">320 KB · Mar 01, 2025</span>
+                  </div>
+                  <div class="file-actions">
+                    <button class="fac-btn"><i class="fa-solid fa-download"></i></button>
+                    <button class="fac-btn"><i class="fa-solid fa-eye"></i></button>
+                    <button class="fac-btn danger"><i class="fa-solid fa-trash-can"></i></button>
+                  </div>
+                </li>
+                <li class="file-item">
+                  <div class="file-icon pdf"><i class="fa-solid fa-file-pdf"></i></div>
+                  <div class="file-info">
+                    <span class="file-name">Graph Theory Final Revision.pdf</span>
+                    <span class="file-meta">980 KB · Mar 20, 2025</span>
+                  </div>
+                  <div class="file-actions">
+                    <button class="fac-btn"><i class="fa-solid fa-download"></i></button>
+                    <button class="fac-btn"><i class="fa-solid fa-eye"></i></button>
+                    <button class="fac-btn danger"><i class="fa-solid fa-trash-can"></i></button>
+                  </div>
+                </li>
+              </ul>
+              <button class="add-file-inline"><i class="fa-solid fa-plus"></i> Upload File</button>
+            </div>
+          </div>
+
+          <!-- Card 4 -->
+          <div class="course-card">
+            <div class="card-color-bar" style="--bar:#b84040"></div>
+            <div class="card-top">
+              <span class="course-code">NET 4202</span>
+              <span class="course-badge active-badge">Active</span>
+            </div>
+            <h3 class="course-title">Computer Networks</h3>
+            <p class="course-desc">TCP/IP model, routing protocols, network security, and socket programming.</p>
+            <div class="card-meta">
+              <span><i class="fa-solid fa-calendar-days"></i> Sem 4</span>
+              <span><i class="fa-solid fa-files"></i> 5 files</span>
+            </div>
+            <button class="show-files-btn">
+              <span class="btn-left">
+                <i class="fa-solid fa-folder-open btn-icon"></i>
+                <span class="btn-text">Show Files</span>
+                <i class="fa-solid fa-chevron-down arrow-icon"></i>
+              </span>
+              <span class="file-count-badge">5 files</span>
+            </button>
+            <div class="files-drawer">
+              <ul class="file-list">
+                <li class="file-item">
+                  <div class="file-icon pdf"><i class="fa-solid fa-file-pdf"></i></div>
+                  <div class="file-info">
+                    <span class="file-name">TCP-IP Protocol Stack Notes.pdf</span>
+                    <span class="file-meta">2.0 MB · Apr 03, 2025</span>
+                  </div>
+                  <div class="file-actions">
+                    <button class="fac-btn"><i class="fa-solid fa-download"></i></button>
+                    <button class="fac-btn"><i class="fa-solid fa-eye"></i></button>
+                    <button class="fac-btn danger"><i class="fa-solid fa-trash-can"></i></button>
+                  </div>
+                </li>
+                <li class="file-item">
+                  <div class="file-icon img"><i class="fa-solid fa-file-image"></i></div>
+                  <div class="file-info">
+                    <span class="file-name">Network Topology Diagram.png</span>
+                    <span class="file-meta">670 KB · Apr 08, 2025</span>
+                  </div>
+                  <div class="file-actions">
+                    <button class="fac-btn"><i class="fa-solid fa-download"></i></button>
+                    <button class="fac-btn"><i class="fa-solid fa-eye"></i></button>
+                    <button class="fac-btn danger"><i class="fa-solid fa-trash-can"></i></button>
+                  </div>
+                </li>
+                <li class="file-item">
+                  <div class="file-icon doc"><i class="fa-solid fa-file-word"></i></div>
+                  <div class="file-info">
+                    <span class="file-name">Routing Protocols Summary.docx</span>
+                    <span class="file-meta">450 KB · Apr 12, 2025</span>
+                  </div>
+                  <div class="file-actions">
+                    <button class="fac-btn"><i class="fa-solid fa-download"></i></button>
+                    <button class="fac-btn"><i class="fa-solid fa-eye"></i></button>
+                    <button class="fac-btn danger"><i class="fa-solid fa-trash-can"></i></button>
+                  </div>
+                </li>
+                <li class="file-item">
+                  <div class="file-icon xls"><i class="fa-solid fa-file-excel"></i></div>
+                  <div class="file-info">
+                    <span class="file-name">Bandwidth Calculations.xlsx</span>
+                    <span class="file-meta">180 KB · Apr 16, 2025</span>
+                  </div>
+                  <div class="file-actions">
+                    <button class="fac-btn"><i class="fa-solid fa-download"></i></button>
+                    <button class="fac-btn"><i class="fa-solid fa-eye"></i></button>
+                    <button class="fac-btn danger"><i class="fa-solid fa-trash-can"></i></button>
+                  </div>
+                </li>
+                <li class="file-item">
+                  <div class="file-icon pdf"><i class="fa-solid fa-file-pdf"></i></div>
+                  <div class="file-info">
+                    <span class="file-name">Security Assignment 2.pdf</span>
+                    <span class="file-meta">1.4 MB · Apr 19, 2025</span>
+                  </div>
+                  <div class="file-actions">
+                    <button class="fac-btn"><i class="fa-solid fa-download"></i></button>
+                    <button class="fac-btn"><i class="fa-solid fa-eye"></i></button>
+                    <button class="fac-btn danger"><i class="fa-solid fa-trash-can"></i></button>
+                  </div>
+                </li>
+              </ul>
+              <button class="add-file-inline"><i class="fa-solid fa-plus"></i> Upload File</button>
+            </div>
+          </div>
+
+        </div><!-- /courses-grid -->
+      </section>
+
+    </div><!-- /scroll-body -->
+  </main>
+
+  <!-- ══ Create Course Modal ════════════════════════════════════ -->
+  <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal" id="createModal">
+      <div class="modal-header">
+        <div>
+          <h2 id="modalTitle">Create New Course</h2>
+          <p>Fill in the details below to add a new course.</p>
+        </div>
+        <button class="modal-close" id="closeModal" aria-label="Close modal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Course Code</label>
+          <input type="text" class="form-input" placeholder="e.g. CSE 4201" />
+        </div>
+        <div class="form-group">
+          <label>Course Title</label>
+          <input type="text" class="form-input" placeholder="e.g. Artificial Intelligence" />
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea class="form-input" rows="3" placeholder="Brief course description…"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Semester</label>
+          <select class="form-input">
+            <option>Semester 1</option>
+            <option>Semester 2</option>
+            <option>Semester 3</option>
+            <option selected>Semester 4</option>
+            <option>Semester 5</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="cancelModal">Cancel</button>
+        <button class="btn-primary">Create Course</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="main_dashboard.js"></script>
+</body>
+</html>
