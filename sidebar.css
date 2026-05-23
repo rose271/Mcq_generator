@@ -1,0 +1,271 @@
+.sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  height: 100vh;
+  background: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 200;
+  box-shadow: 4px 0 28px rgba(0,0,0,.18);
+  transition: width var(--sidebar-trans), min-width var(--sidebar-trans);
+  overflow: hidden;          /* clips text during collapse */
+}
+
+/* ── Collapsed state ── */
+.sidebar.collapsed {
+  width: var(--sidebar-w-col);
+  min-width: var(--sidebar-w-col);
+}
+
+/* ── Toggle button ── */
+.sidebar-toggle {
+  position: relative;
+  top: 10px;   
+  left:15px;          /* half out of sidebar edge */
+  width: 35px;
+  height: 35px;
+  background: rgba(255, 255, 255, 0.396);
+  border: 1px solid var(--teal);
+  border-radius: 15%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.sidebar-toggle:hover { 
+  background: var(--bg);
+  color: var(--gold);
+}
+
+/* Rotate the bar icon when collapsed */
+
+/* ── Brand ── */
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 26px 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  min-height: 70px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.brand-icon {
+  width: 34px;
+  height: 34px;
+  background: var(--gold);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 15px;
+  flex-shrink: 0;
+  transition: transform var(--trans);
+}
+
+.brand-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 600;
+  font-size: 20px;
+  color: #fff;
+  letter-spacing: .3px;
+  opacity: 1;
+  transition: opacity var(--sidebar-trans);
+  white-space: nowrap;
+}
+
+.sidebar.collapsed .brand-name { opacity: 0; pointer-events: none; }
+
+/* ── Nav ── */
+.sidebar-nav {
+  flex: 1;
+  padding: 20px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.nav-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: rgba(255,255,255,.28);
+  padding: 0 8px;
+  margin-bottom: 8px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity var(--sidebar-trans);
+}
+
+.sidebar.collapsed .nav-label { opacity: 0; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  color: rgba(255,255,255,.72);
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 200;
+  font-family: "Inria serif";
+  transition: background var(--trans), color var(--trans), padding var(--sidebar-trans);
+  position: relative;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.nav-item i {
+  width: 18px;
+  text-align: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.nav-text {
+  opacity: 1;
+  transition: opacity var(--sidebar-trans);
+}
+
+.sidebar.collapsed .nav-text { opacity: 0; }
+
+.nav-item:hover {
+  background: rgba(255,255,255,.1);
+  color: #fff;
+}
+
+.nav-item.active {
+  background: rgba(252,165,64,.15);
+  color: #fff;
+  font-weight: 500;
+}
+
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 20%; bottom: 20%;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--gold);
+}
+
+/* ── Tooltip (shows when collapsed) ── */
+.nav-item::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(var(--sidebar-w-col) - 4px);
+  background: #163540;
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 8px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity .18s, transform .18s;
+  z-index: 400;
+  box-shadow: 0 4px 14px rgba(0,0,0,.22);
+}
+
+/* Only show tooltips when sidebar is collapsed */
+.sidebar.collapsed .nav-item:hover::after {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* User card tooltip */
+.user-card::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(var(--sidebar-w-col) - 4px);
+  background: #163540;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 8px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity .18s, transform .18s;
+  z-index: 400;
+  box-shadow: 0 4px 14px rgba(0,0,0,.22);
+}
+
+.sidebar.collapsed .user-card:hover::after {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ── Footer ── */
+.sidebar-footer {
+  padding: 14px 10px 18px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background var(--trans);
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.user-card:hover { background: rgba(255,255,255,.07); }
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, var(--gold), #e0a550);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 12px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.user-info {
+  flex: 1;
+  overflow: hidden;
+  transition: opacity var(--sidebar-trans);
+}
+
+.sidebar.collapsed .user-info { opacity: 0; }
+.sidebar.collapsed .dot-menu  { opacity: 0; }
+
+.user-name { display: block; font-size: 13px; font-weight: 500; color: #fff; }
+.user-role { display: block; font-size: 11px; color: rgba(255,255,255,.42); }
+.dot-menu  { color: rgba(255,255,255,.38); font-size: 13px; transition: opacity var(--sidebar-trans); }
+
+/* ── Mobile backdrop ── */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 190;
+  opacity: 0;
+  transition: opacity var(--trans);
+}
+
