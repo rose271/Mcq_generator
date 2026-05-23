@@ -27,6 +27,14 @@
 
   /* ── helper ── */
   function isMobile() { return window.innerWidth <= MOBILE_BP; }
+  function syncNavOffset() {
+    const w = isMobile()
+      ? '0px'
+      : sidebar.classList.contains('collapsed')
+        ? '64px'   // your collapsed sidebar width
+        : '230px'; // your expanded sidebar width
+    document.documentElement.style.setProperty('--sidebar-w', w);
+  }
 
   /* ── restore preference on desktop ── */
   if (!isMobile() && localStorage.getItem(STORAGE_KEY) === 'true') {
@@ -37,6 +45,7 @@
   function desktopToggle() {
     const isCollapsed = sidebar.classList.toggle('collapsed');
     localStorage.setItem(STORAGE_KEY, isCollapsed);
+    syncNavOffset();
   }
 
   /* ── Mobile: slide in / out ── */
@@ -44,12 +53,14 @@
     sidebar.classList.add('mobile-open');
     backdrop.classList.add('visible');
     document.body.style.overflow = 'hidden';
+    syncNavOffset();
   }
 
   function mobileClose() {
     sidebar.classList.remove('mobile-open');
     backdrop.classList.remove('visible');
     document.body.style.overflow = '';
+    syncNavOffset();
   }
 
   /* ── Click on toggle button ── */
@@ -80,8 +91,10 @@
       } else {
         sidebar.classList.remove('collapsed');
       }
+      syncNavOffset();
     }
   });
+  syncNavOffset();
 })();
 
 

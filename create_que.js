@@ -147,6 +147,11 @@ function buildPreview() {
 }
  
 function goNext() {
+  const nextBtn = document.getElementById('nextBtn');
+  if (nextBtn.dataset.action === 'generate') {
+    generate();
+    return;
+  }
   if (currentStep < totalSteps - 1) {
     showStep(currentStep + 1);
   }
@@ -172,12 +177,18 @@ function showStep(n) {
  
   const backBtn = document.getElementById('backBtn');
   const nextBtn = document.getElementById('nextBtn');
-  const genBtn = document.getElementById('generateBtn');
  
   backBtn.classList.toggle('hidden', n === 0);
-  nextBtn.classList.toggle('hidden', n === 0 || n === totalSteps - 1);
-  genBtn.classList.toggle('hidden', n !== totalSteps - 1);
+  nextBtn.classList.remove('hidden');
  
+  if(n===totalSteps-1){
+    nextBtn.innerHTML = 'Generate &#10003;';
+    nextBtn.dataset.action = 'generate';
+  } else{
+    nextBtn.innerHTML = 'Next &#8250;';
+    nextBtn.dataset.action = 'next';
+  }
+
   if (n === 0) updateNextBtn();
 }
  

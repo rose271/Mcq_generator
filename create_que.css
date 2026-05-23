@@ -10,6 +10,8 @@
     --text-mid: #6a7a82;
     --orange: #e8924a;
     --slate: #7a9aaa;
+    --sidebar-w:      230px;
+    --sidebar-w-col:  64px;   /* collapsed width */
   }
 
 
@@ -434,13 +436,14 @@ body::before {
   /* ── NAV BUTTONS ── */
   .nav-btns {
     position: fixed;
-    bottom: 24px;
-    left: 0; right: 0;
+    bottom: 64px;
+    left: var(--sidebar-w, 64px); right: 64px;
     display: flex;
     justify-content: space-between;
     padding: 0 32px;
     z-index: 50;
     pointer-events: none;
+    transition: left 0.3s ease; 
   }
   .nav-btns > * { pointer-events: all; }
  
