@@ -47,10 +47,11 @@ function buildMarksLayout() {
           id="count_${type}" oninput="calcTotal()">
       </div>
       <div class="pair-arrow">
-        <svg width="44" height="28" viewBox="0 0 44 28">
-          <path d="M4,4 Q22,28 40,4" fill="none" stroke="#7a9aaa" stroke-width="1.5" stroke-dasharray="4,3"/>
-          <polygon points="36,4 42,8 38,0" fill="#7a9aaa"/>
+        <svg width="100" height="100" viewBox="0 0 100 100">
+          <path d="M10,40 Q50,0 92,40" fill="none" stroke="#7a9aaa" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <polygon points="82,38 92,32 92,42" fill="#7a9aaa"/>
         </svg>
+
       </div>
       <div class="define-box brown">
         <label style="color:var(--teal-dark)">${rightLabel}</label>
@@ -86,11 +87,11 @@ function calcTotal() {
 }
  
 function buildPreview() {
-  const inst = document.getElementById('instName').value || 'Institution Name';
-  const exam = document.getElementById('examName').value || 'Exam Name';
-  const code = document.getElementById('courseCode').value || 'CODE-000';
-  const title = document.getElementById('courseTitle').value || 'Course Title';
-  const dur = document.getElementById('durationInput').value || '30';
+  const inst = document.getElementById('instName').value;
+  const exam = document.getElementById('examName').value;
+  const code = document.getElementById('courseCode').value;
+  const title = document.getElementById('courseTitle').value;
+  const dur = document.getElementById('durationInput').value;
   const total = calcTotal();
  
   let html = `

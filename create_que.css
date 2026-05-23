@@ -176,6 +176,10 @@ body::before {
   }
  
   .define-box {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%; /* match row height */
     border-radius: 14px;
     padding: 16px 18px;
   }
@@ -200,7 +204,7 @@ body::before {
  
   .define-input {
     width: 100%;
-    background: rgba(255,255,255,0.22);
+    background: rgba(255,255,255,0.8);
     border: none;
     border-radius: 8px;
     padding: 7px 10px;
@@ -255,8 +259,8 @@ body::before {
  
   .pair-row {
     display: grid;
-    grid-template-columns: 1fr 44px 1fr;
-    align-items: center;
+    grid-template-columns: 1fr 100px 1fr;
+    align-items: stretch;
     gap: 0;
   }
  
