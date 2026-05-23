@@ -54,7 +54,7 @@ function buildMarksLayout() {
 
       </div>
       <div class="define-box brown">
-        <label style="color:var(--teal-dark)">${rightLabel}</label>
+        <label style="color:var(--text-dark)">${rightLabel}</label>
         <input class="define-input" type="text" value="" placeholder="${rightPlaceholder}"
           id="marks_${type}" oninput="calcTotal()">
       </div>
@@ -89,6 +89,7 @@ function calcTotal() {
 function buildPreview() {
   const inst = document.getElementById('instName').value;
   const exam = document.getElementById('examName').value;
+  const year = document.getElementById('examYear').value;
   const code = document.getElementById('courseCode').value;
   const title = document.getElementById('courseTitle').value;
   const dur = document.getElementById('durationInput').value;

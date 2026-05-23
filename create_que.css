@@ -328,11 +328,11 @@ body::before {
     border-radius: 14px;
     padding: 20px 22px;
     background: rgba(255,255,255,0.6);
-    max-height: 320px;
+    max-height: 400px;
     overflow-y: auto;
   }
   .exam-desc-box h3 {
-    font-size: 13.5px;
+    font-size: 16px;
     font-weight: 700;
     color: var(--teal);
     margin-bottom: 16px;
@@ -343,7 +343,7 @@ body::before {
   }
   .exam-field label {
     display: block;
-    font-size: 12.5px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--text-dark);
     margin-bottom: 4px;
@@ -354,7 +354,7 @@ body::before {
     border-bottom: 1.5px solid #c0ccd2;
     background: transparent;
     padding: 4px 2px;
-    font-size: 13px;
+    font-size: 15px;
     font-family: 'Nunito', sans-serif;
     color: var(--text-dark);
     outline: none;
@@ -396,7 +396,7 @@ body::before {
     gap: 10px;
   }
   .unique-set-wrap label {
-    font-size: 12.5px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--text-dark);
     text-align: right;
@@ -414,7 +414,7 @@ body::before {
   }
  
   .preview-label {
-    font-size: 13px;
+    font-size: 16px;
     font-weight: 700;
     color: var(--text-dark);
     margin-bottom: 10px;
@@ -424,18 +424,18 @@ body::before {
     border-radius: 10px;
     background: #fff;
     padding: 18px 22px;
-    font-size: 12px;
+    font-size: 13px;
     color: #333;
     line-height: 1.7;
-    max-height: 260px;
+    max-height: 320px;
     overflow-y: auto;
   }
-  .preview-paper .inst { text-align: center; font-weight: 700; font-size: 12.5px; }
-  .preview-paper .exam-name { text-align: center; font-size: 12px; }
-  .preview-paper .meta-row { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11.5px; }
+  .preview-paper .inst { text-align: center; font-weight: 700; font-size: 13px; }
+  .preview-paper .exam-name { text-align: center; font-size: 13px; }
+  .preview-paper .meta-row { display: flex; justify-content: space-between; margin-top: 6px; font-size: 13px; }
   .preview-paper .section-head { font-weight: 700; margin-top: 10px; }
-  .preview-paper .q-line { margin-left: 14px; display: flex; justify-content: space-between; font-size: 11.5px; }
-  .preview-paper .mcq-opts { margin-left: 14px; font-size: 11px; color: #555; }
+  .preview-paper .q-line { margin-left: 14px; display: flex; justify-content: space-between; font-size: 13px; }
+  .preview-paper .mcq-opts { margin-left: 14px; font-size: 13px; color: #555; }
  
   /* ── NAV BUTTONS ── */
   .nav-btns {
