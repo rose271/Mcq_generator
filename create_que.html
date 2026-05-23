@@ -70,8 +70,8 @@
  
   <!-- STEP 1: Choose type -->
   <div class="card step active" id="step1">
-    <div class="card-title">Create your <strong>Question</strong></div>
-    <div class="card-subtitle">What type of question you want?</div>
+    <div class="card-title">Select your <strong>Question Type</strong></div>
+    <div class="card-subtitle">What type of questions do you want to include?</div>
     <div class="qt-grid">
       <div class="qt-card" data-type="written-no-layer" onclick="toggleType(this)">
         <span class="check"></span>
@@ -98,8 +98,8 @@
  
   <!-- STEP 2: Define Set & Marks -->
   <div class="card wide step" id="step2">
-    <div class="card-title">Create your <strong>Question</strong></div>
-    <div class="card-subtitle">Define Question Set &amp; Marks</div>
+    <div class="card-title">Distribute Marks</div>
+    <div class="card-subtitle"></div>
     <div class="pairs-layout" id="marksLayout">
       <!-- dynamically filled -->
     </div>
@@ -116,7 +116,11 @@
       <div class="duration-wrap">
         <span class="meta-label">Duration:</span>
         <input class="duration-input" type="number" value="30" min="5" max="300" id="durationInput">
-        <span class="duration-unit">min ▾</span>
+        <select class="duration-unit" id="durationUnit">
+          <option value="min">min</option>
+          <option value="hr">hr</option>
+          <option value="sec">sec</option>
+        </select>
       </div>
     </div>
     <div class="exam-desc-box">

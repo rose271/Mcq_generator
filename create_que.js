@@ -36,7 +36,7 @@ function buildMarksLayout() {
     if (type === 'written-no-layer') { leftLabel = 'How many Written\n(no layer)?'; rightLabel = 'Marks Distribution'; rightPlaceholder = '2+2+3+3'; }
     else if (type === 'written-layer') { leftLabel = 'How many Written\n(with layer)?'; rightLabel = 'Marks Distribution'; rightPlaceholder = '4+6'; }
     else if (isMCQ) { leftLabel = 'How many MCQs?'; rightLabel = 'Marks per each MCQ'; rightPlaceholder = '0.5'; }
-    else if (isTF) { leftLabel = 'How many True/False?'; rightLabel = 'Marks per each'; rightPlaceholder = '1'; }
+    else if (isTF) { leftLabel = 'How many True/False?'; rightLabel = 'Marks per each T/F'; rightPlaceholder = '1'; }
  
     const row = document.createElement('div');
     row.className = 'pair-row';
@@ -92,13 +92,15 @@ function buildPreview() {
   const code = document.getElementById('courseCode').value;
   const title = document.getElementById('courseTitle').value;
   const dur = document.getElementById('durationInput').value;
+  const durUnit = document.getElementById('durationUnit').value;
+
   const total = calcTotal();
  
   let html = `
     <div class="inst">${inst}</div>
     <div class="exam-name">${exam}</div>
     <div class="meta-row">
-      <span>Duration: ${dur} min</span><span>Full Marks: ${total}</span>
+      <span>Duration: ${dur} ${durUnit}</span><span>Full Marks: ${total}</span>
     </div>
     <div class="meta-row">
       <span>Course Code: ${code}</span><span>Course Title: ${title}</span>
