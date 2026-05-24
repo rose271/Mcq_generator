@@ -144,6 +144,14 @@ body { display: flex; }
   z-index: 1;
 }
 
+.search-bar::placeholder {
+  color: #999;
+  transition: opacity 0.2s;
+}
+
+.search-bar:focus::placeholder {
+  opacity: 0; /* hide placeholder on focus */
+}
 .search-icon {
   position: absolute;
   left: 16px;

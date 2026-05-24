@@ -269,3 +269,45 @@ document.querySelectorAll('.nav-item').forEach(item => {
     item.classList.add('active');
   });
 });
+
+//search animation
+const input = document.getElementById('searchInput');
+const phrases = [
+  'Search courses names…',
+  'Search files…',
+  'Search questions…',
+  'Use course code e.g."CSE 101"…',
+  'Use "semester 4"…',
+];
+
+let phraseIndex = 0;
+let charIndex = 0;
+let isDeleting = false;
+let typingTimer;
+
+function type() {
+  const current = phrases[phraseIndex];
+
+  if (!isDeleting) {
+    input.placeholder = current.slice(0, ++charIndex);
+    if (charIndex === current.length) {
+      isDeleting = true;
+      typingTimer = setTimeout(type, 1800); // pause before deleting
+      return;
+    }
+  } else {
+    input.placeholder = current.slice(0, --charIndex);
+    if (charIndex === 0) {
+      isDeleting = false;
+      phraseIndex = (phraseIndex + 1) % phrases.length;
+    }
+  }
+
+  typingTimer = setTimeout(type, isDeleting ? 45 : 90);
+}
+
+// Only animate when input is empty and not focused
+input.addEventListener('focus', () => clearTimeout(typingTimer));
+input.addEventListener('blur', () => { if (!input.value) type(); });
+
+type(); // kick off

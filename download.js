@@ -2,48 +2,66 @@
    ExamCraft — Download History  |  download.js
 ───────────────────────────────────────────── */
 
-const STORAGE_KEY = 'examcraft_downloads';
+const STORAGE_KEY  = 'examcraft_downloads';
+const SEED_VERSION = 'v1'; // bump when you change SEED_DATA
 
+/* ══════════════════════════════════════════════
+   ✏️  ADD / EDIT YOUR FILES HERE
+   id   → unique string
+   name → display name
+   type → 'pdf' | 'docx' | 'xlsx'
+   size → MB as a number
+   date → 'YYYY-MM-DD'
+══════════════════════════════════════════════ */
 const SEED_DATA = [
-  { id: 'f1', name: 'Operating System Tutorial Question File',   type: 'pdf',  size: 2.2, date: '2026-10-24' },
-  { id: 'f2', name: 'Operating System Tutorial Question File',   type: 'pdf',  size: 2.2, date: '2026-10-24' },
-  { id: 'f3', name: 'Data Structures — Mid-Term Exam Set A',     type: 'pdf',  size: 1.8, date: '2026-10-18' },
-  { id: 'f4', name: 'Calculus II Final Examination Paper',       type: 'pdf',  size: 3.1, date: '2026-10-12' },
-  { id: 'f5', name: 'English Literature Comprehension Test',     type: 'docx', size: 0.9, date: '2026-09-30' },
-  { id: 'f6', name: 'Physics Lab Assessment Question Bank',      type: 'xlsx', size: 1.4, date: '2026-09-20' },
-  { id: 'f7', name: 'Chemistry Practical Evaluation Sheet',      type: 'docx', size: 0.7, date: '2026-09-15' },
-  { id: 'f8', name: 'Computer Networks Semester Exam Paper',     type: 'pdf',  size: 2.9, date: '2026-09-05' },
+  { id: 'f1', name: 'Operating System Tutorial Question File',  type: 'pdf',  size: 2.2, date: '2026-10-24' },
+  { id: 'f2', name: 'Data Structures — Mid-Term Exam Set A',    type: 'pdf',  size: 1.8, date: '2026-10-18' },
+  { id: 'f3', name: 'Calculus II Final Examination Paper',      type: 'pdf',  size: 3.1, date: '2026-10-12' },
+  { id: 'f4', name: 'English Literature Comprehension Test',    type: 'docx', size: 0.9, date: '2026-09-30' },
+  { id: 'f5', name: 'Physics Lab Assessment Question Bank',     type: 'xlsx', size: 1.4, date: '2026-09-20' },
+  { id: 'f6', name: 'Chemistry Practical Evaluation Sheet',     type: 'docx', size: 0.7, date: '2026-09-15' },
+  { id: 'f7', name: 'Computer Networks Semester Exam Paper',    type: 'pdf',  size: 2.9, date: '2026-09-05' },
 ];
-
-/* ── State ── */
-let files      = loadFiles();
-let query      = '';
-let activeType = 'all';
 
 /* ── Persistence ── */
 function loadFiles() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [...SEED_DATA];
+    const savedVersion = localStorage.getItem(STORAGE_KEY + '_version');
+    const raw          = localStorage.getItem(STORAGE_KEY);
+    if (savedVersion !== SEED_VERSION || !raw) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_DATA));
+      localStorage.setItem(STORAGE_KEY + '_version', SEED_VERSION);
+      return [...SEED_DATA];
+    }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [...SEED_DATA];
   } catch {
     return [...SEED_DATA];
   }
 }
 
 function saveFiles() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(files)); } catch {}
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(files));
+    localStorage.setItem(STORAGE_KEY + '_version', SEED_VERSION);
+  } catch {}
 }
 
+/* ── State ── */
+let files      = loadFiles();
+let query      = '';
+let activeType = 'all';
+
 /* ── DOM refs ── */
-const listEl   = document.getElementById('file-list');
-const emptyEl  = document.getElementById('empty-state');
-const searchEl = document.getElementById('search-input');
-const badgeEl  = document.getElementById('badge-count');
-const toastEl  = document.getElementById('toast');
-const clearBtn = document.getElementById('clear-all-btn');
+const listEl    = document.getElementById('file-list');
+const emptyEl   = document.getElementById('empty-state');
+const searchEl  = document.getElementById('search-input');
+const badgeEl   = document.getElementById('badge-count');
+const toastEl   = document.getElementById('toast');
+const clearBtn  = document.getElementById('clear-all-btn');
+const cardTpl   = document.getElementById('file-card-template'); // ← HTML template
 
 const statTotal  = document.getElementById('stat-total');
-const statSize   = document.getElementById('stat-size');
 const statRecent = document.getElementById('stat-recent');
 
 let toastTimer = null;
@@ -69,80 +87,54 @@ function render() {
   updateBadge();
 }
 
-/* ── Card Builder ── */
+/* ── Card Builder ──────────────────────────────
+   Clones the <template> from download.html,
+   fills in text/classes, wires up buttons.
+   NO HTML strings here — edit the template tag
+   in download.html to change card structure.
+─────────────────────────────────────────────── */
 function buildCard(f, idx) {
-  const card = document.createElement('div');
-  card.className = `file-card type-${f.type}`;
+  // clone the template
+  const clone = cardTpl.content.cloneNode(true);
+  const card  = clone.querySelector('.file-card');
+
+  // set type class (drives strip colour + badge colour via CSS)
+  card.classList.add(`type-${f.type}`);
   card.style.animationDelay = `${idx * 55}ms`;
   card.dataset.id = f.id;
 
-  card.innerHTML = `
-    <div class="file-card__strip"></div>
+  // badge icon paths (defined here so HTML stays clean)
+  const iconPaths = {
+    pdf: `<path d="M5 3h7l4 4v10a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M12 3v4h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <path d="M7 10h2a1 1 0 010 2H7v-2zM7 12v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>`,
+    docx:`<path d="M5 3h7l4 4v10a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M12 3v4h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <path d="M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>`,
+    xlsx:`<path d="M5 3h7l4 4v10a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M12 3v4h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <path d="M7 10h6M7 13h6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>`,
+  };
 
-    <div class="file-card__icon">
-      <div class="file-type-badge">
-        ${fileIcon(f.type)}
-        <span class="badge-label">${f.type.toUpperCase()}</span>
-      </div>
-    </div>
+  // fill badge
+  card.querySelector('.badge-svg').innerHTML  = iconPaths[f.type] || iconPaths.pdf;
+  card.querySelector('.badge-label').textContent = f.type.toUpperCase();
 
-    <div class="file-card__body">
-      <div class="file-card__name" title="${escHtml(f.name)}">${escHtml(f.name)}</div>
-      <div class="file-card__meta">
-        <span>${f.type.toUpperCase()}</span>
-        <span class="meta-dot"></span>
-        <span>${f.size} MB</span>
-        <span class="meta-dot"></span>
-        <span>${formatDate(f.date)}</span>
-      </div>
-    </div>
+  // fill body
+  const nameEl = card.querySelector('.file-card__name');
+  nameEl.textContent = f.name;
+  nameEl.title       = f.name;
 
-    <div class="file-card__actions">
-      <button class="action-btn" title="Re-download" onclick="reDownload('${f.id}')">
-        <svg viewBox="0 0 20 20" fill="none">
-          <path d="M10 3v9m0 0L6.5 8.5M10 12l3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M4 15h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-      </button>
-      <button class="action-btn" title="Copy name" onclick="copyName('${f.id}')">
-        <svg viewBox="0 0 20 20" fill="none">
-          <rect x="7" y="7" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M7 13H5a1.5 1.5 0 01-1.5-1.5V5A1.5 1.5 0 015 3.5h6.5A1.5 1.5 0 0113 5v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-      </button>
-      <button class="action-btn danger" title="Remove" onclick="removeFile('${f.id}')">
-        <svg viewBox="0 0 20 20" fill="none">
-          <path d="M5 7h10M8 7V5h4v2M9 10v4M11 10v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <rect x="5" y="7" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
-        </svg>
-      </button>
-    </div>`;
+  card.querySelector('.meta-type').textContent = f.type.toUpperCase();
+  card.querySelector('.meta-size').textContent = `${f.size} MB`;
+  card.querySelector('.meta-date').textContent = formatDate(f.date);
+
+  // wire buttons
+  card.querySelector('.btn-download').addEventListener('click', () => reDownload(f.id));
+  card.querySelector('.btn-copy').addEventListener('click',     () => copyName(f.id));
+  card.querySelector('.btn-remove').addEventListener('click',   () => removeFile(f.id));
 
   return card;
-}
-
-/* ── File Icons ── */
-function fileIcon(type) {
-  if (type === 'pdf') return `
-    <svg viewBox="0 0 20 20" fill="none">
-      <path d="M5 3h7l4 4v10a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="currentColor" stroke-width="1.4"/>
-      <path d="M12 3v4h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-      <path d="M7 10h2a1 1 0 010 2H7v-2zM7 12v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-    </svg>`;
-
-  if (type === 'docx') return `
-    <svg viewBox="0 0 20 20" fill="none">
-      <path d="M5 3h7l4 4v10a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="currentColor" stroke-width="1.4"/>
-      <path d="M12 3v4h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-      <path d="M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-    </svg>`;
-
-  return `
-    <svg viewBox="0 0 20 20" fill="none">
-      <path d="M5 3h7l4 4v10a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="currentColor" stroke-width="1.4"/>
-      <path d="M12 3v4h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-      <path d="M7 10h6M7 13h6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-    </svg>`;
 }
 
 /* ── Actions ── */
@@ -160,7 +152,7 @@ function copyName(id) {
 }
 
 function removeFile(id) {
-  const card = document.querySelector(`.file-card[data-id="${id}"]`);
+  const card = listEl.querySelector(`.file-card[data-id="${id}"]`);
   if (card) {
     card.style.transition = 'opacity 0.22s, transform 0.22s';
     card.style.opacity    = '0';
@@ -190,7 +182,6 @@ searchEl.addEventListener('input', e => {
   render();
 });
 
-/* ⌘K / Ctrl+K shortcut */
 document.addEventListener('keydown', e => {
   if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
     e.preventDefault();
@@ -212,17 +203,13 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 /* ── Stats ── */
 function updateStats() {
   const total = files.length;
-  const size  = files.reduce((s, f) => s + f.size, 0);
   const dates = files.map(f => f.date).sort().reverse();
-
-  statTotal.textContent  = total;
-  statSize.textContent   = size > 0 ? `${size.toFixed(1)} MB` : '0 MB';
-  statRecent.textContent = dates.length ? formatDateShort(dates[0]) : '—';
+  if (statTotal)  statTotal.textContent  = total;
+  if (statRecent) statRecent.textContent = dates.length ? formatDateShort(dates[0]) : '—';
 }
 
 function updateBadge() {
   if (badgeEl) badgeEl.textContent = files.length;
-  /* also update sidebar badge if it exists */
   if (typeof updateSidebarBadge === 'function') updateSidebarBadge(files.length);
 }
 
@@ -236,23 +223,17 @@ function showToast(msg) {
 
 /* ── Helpers ── */
 function formatDate(iso) {
-  const d = new Date(iso + 'T00:00:00');
-  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  return new Date(iso + 'T00:00:00')
+    .toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function formatDateShort(iso) {
-  const d = new Date(iso + 'T00:00:00');
-  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  return new Date(iso + 'T00:00:00')
+    .toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
 
 function shortName(name) {
   return name.length > 40 ? name.slice(0, 40) + '…' : name;
-}
-
-function escHtml(str) {
-  return str.replace(/[&<>"']/g, c => (
-    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
-  ));
 }
 
 /* ── Init ── */

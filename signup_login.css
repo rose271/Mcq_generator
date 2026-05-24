@@ -380,3 +380,165 @@ body {
     flex-direction: column;
   }
 }
+/* ─────────────────────────────────────────────
+   signup_login.css  ←  ANIMATION ADDITIONS
+   Paste this at the bottom of your existing
+   signup_login.css file. Nothing else changes.
+───────────────────────────────────────────── */
+
+
+/* ── 1. Left panel: slow drifting gradient ── */
+.left-panel {
+  background: linear-gradient(
+    135deg,
+    #c8d8dc 0%,
+    #b8cfd6 30%,
+    #c8d8dc 60%,
+    #d4e4e8 100%
+  );
+  background-size: 300% 300%;
+  animation: panelGradient 8s ease infinite;
+}
+
+@keyframes panelGradient {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+
+
+/* ── 2. Floating shapes ── */
+/* ─────────────────────────────────────────────
+   ExamCraft — Background Animation
+   bg_animation.css
+
+   Purely additive — this file only adds new
+   rules. Nothing in signup_login.css is touched.
+───────────────────────────────────────────── */
+
+/* ── Container ──
+   Fixed behind everything, covers the viewport.
+   pointer-events: none so it never blocks clicks.
+─────────────────────────────────────────── */
+.bg-shapes {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Make sure the card sits above the bg layer */
+.card {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Base shape style ── */
+.bg-shape {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0;                    /* start invisible, animation handles fade-in */
+  will-change: transform, opacity;
+}
+
+/* ── Individual shapes
+   Mix of teal and orange to match your palette.
+   Each has a different size, position, and
+   animation so they feel independent.
+──────────────────────────────────────────── */
+
+/* Large teal blob — top-left */
+
+
+/* Medium orange blob — top-right */
+.bg-shape--2 {
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(28, 74, 90,0.30) 0%, transparent 70%);
+  top: 5%;
+  right: 4%;
+  animation: floatC 7s ease-in-out infinite;
+  animation-delay: 1.5s;
+}
+
+/* Small teal blob — mid-left */
+.bg-shape--3 {
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(circle, rgba(74, 143, 168,0.489) 0%, transparent 70%);
+  top: 40%;
+  left: 6%;
+  animation: floatA 7s ease-in-out infinite;
+  animation-delay: 0.8s;
+}
+
+/* Large orange blob — bottom-right */
+.bg-shape--4 {
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(circle, rgba(254, 157, 59, 0.489) 0%, transparent 70%);
+  bottom: -100px;
+  right: -80px;
+  animation: floatA 11s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+/* Medium teal blob — bottom-left */
+.bg-shape--5 {
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(255, 175, 86, 0.489) 0%, transparent 70%);
+
+  bottom: 8%;
+  left: 10%;
+
+  animation: floatB 10s ease-in-out infinite;
+  animation-delay: 3s;
+}
+
+/* Small orange dot — center */
+.bg-shape--6 {
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, rgba(255, 175, 86, 0.489) 0%, transparent 70%);
+  top: 55%;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: floatC 8s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+/* ── Keyframes ──
+   Three independent motion patterns so shapes
+   don't all move in sync.
+─────────────────────────────────────────── */
+
+/* Gentle drift: up-left → down-right */
+@keyframes floatA {
+  0%   { opacity: 0;    transform: translate(0px,   0px)   scale(1);    }
+  10%  { opacity: 1;                                                      }
+  50%  { opacity: 1;    transform: translate(30px, -25px)  scale(1.08); }
+  90%  { opacity: 1;                                                      }
+  100% { opacity: 0;    transform: translate(0px,   0px)   scale(1);    }
+}
+
+/* Circular-ish drift */
+@keyframes floatB {
+  0%   { opacity: 0;    transform: translate(0px,  0px)  scale(1);    }
+  10%  { opacity: 1;                                                    }
+  33%  { opacity: 1;    transform: translate(-20px, 30px) scale(1.05); }
+  66%  { opacity: 1;    transform: translate(25px,  20px) scale(0.95); }
+  90%  { opacity: 1;                                                    }
+  100% { opacity: 0;    transform: translate(0px,  0px)  scale(1);    }
+}
+
+/* Pulse + subtle float */
+@keyframes floatC {
+  0%   { opacity: 0;    transform: translate(0px, 0px)  scale(1);    }
+  10%  { opacity: 1;                                                   }
+  40%  { opacity: 1;    transform: translate(15px, -20px) scale(1.12); }
+  70%  { opacity: 1;    transform: translate(-10px, 10px) scale(0.92); }
+  90%  { opacity: 1;                                                   }
+  100% { opacity: 0;    transform: translate(0px, 0px)  scale(1);    }
+}

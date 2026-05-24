@@ -9,7 +9,7 @@
 :root {
   --font-display: 'Playfair Display', Georgia, serif;
   --font-body:    'DM Sans', sans-serif;
-
+  --bg:             #f4f1eb;
   --teal:       #1c4a5a;
   --teal-soft:  #2e6678;
   --teal-deep:  #12323f;
@@ -45,7 +45,7 @@ html { font-size: 15px; }
 
 body {
   font-family: var(--font-body);
-  background: var(--bg-main);
+  background: var(--bg);
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
@@ -90,13 +90,18 @@ body {
   letter-spacing: -0.02em;
 }
 
-.hero__title .color_change {
+.color_change{
+  color: var(--gold-light);
+}
+
+.hero__title em {
+  font-style: italic;
   color: var(--gold-light);
 }
 
 .hero__desc {
   margin-top: 14px;
-  color: rgba(255, 255, 255, 0.603);
+  color: rgba(255, 255, 255, 0.50);
   font-size: 13.5px;
   line-height: 1.65;
 }
@@ -206,8 +211,8 @@ body {
   width: 100%;
   height: 44px;
   padding: 0 52px 0 42px;
-  background: var(--box-color);
-  border: 1px solid var(--border);
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
   border-radius: 10px;
   font-family: var(--font-body);
   font-size: 0.875rem;
@@ -219,9 +224,21 @@ body {
 .search-input::placeholder { color: #8b867c; }
 
 .search-input:focus {
-  background-color: white;
   border-color: var(--teal-soft);
   box-shadow: 0 0 0 3px var(--teal-glow);
+}
+
+.search-kbd {
+  position: absolute;
+  right: 12px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  pointer-events: none;
 }
 
 /* Filter buttons */
@@ -230,7 +247,7 @@ body {
 .filter-btn {
   height: 36px;
   padding: 0 16px;
-  border: 1.5px solid var(--border);
+  border: 1px solid rgba(0, 0, 0, 0.282);
   border-radius: 5px;
   background: transparent;
   font-family: var(--font-body);
@@ -238,6 +255,7 @@ body {
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.18s;
+
 }
 
 .filter-btn:hover { background: rgba(252, 165, 64, 0.15); }
@@ -257,7 +275,7 @@ body {
   padding: 0 14px;
   border: 1.5px solid rgba(224, 160, 160, 0.2);
   border-radius: var(--radius-pill);
-  background: rgba(224, 160, 160, 0.06);
+  background: rgba(224, 160, 160, 0.238);
   font-family: var(--font-body);
   font-size: 0.8rem;
   color: #b06060;
@@ -277,6 +295,7 @@ body {
 .file-section {
   flex: 1;
   padding: 28px 56px 48px;
+  background-color: white;
 }
 
 .file-list {
@@ -287,7 +306,7 @@ body {
 
 /* ── File Card ── */
 .file-card {
-  background: var(--bg-card);
+  
   border: 1.5px solid var(--border);
   border-radius: var(--radius-lg);
   overflow: hidden;

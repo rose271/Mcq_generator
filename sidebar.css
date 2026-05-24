@@ -328,3 +328,74 @@
   bottom: 40px;
   right: -40px;
 }
+
+
+/* each shape gets a gentle float animation with different
+   durations + delays so they drift independently           */
+
+.deco-rect-top-left {
+  animation: float-a 7s ease-in-out infinite;
+}
+
+.deco-rect-top-right  {
+  animation: float-b 9s ease-in-out infinite;
+}
+
+.deco-rect-bottom-left {
+  animation: float-c 11s ease-in-out infinite;
+}
+
+.deco-circle-bottom-right {
+  animation: float-b 8s ease-in-out infinite;
+}
+
+
+
+/* four distinct float paths */
+ @keyframes float-a {
+  0%,100% { transform: translate(0px,  0px) rotate(0deg);   }
+  33%      { transform: translate(6px, -10px) rotate(2deg);  }
+  66%      { transform: translate(-4px, 6px) rotate(-1deg);  }
+}
+
+@keyframes float-b {
+  0%,100% { transform: translate(0px,  0px) rotate(0deg);   }
+  33%      { transform: translate(-8px, 8px) rotate(-3deg);  }
+  66%      { transform: translate(5px, -6px) rotate(2deg);   }
+}
+
+@keyframes float-c {
+  0%,100% { transform: translate(0px,   0px);  }
+  25%      { transform: translate(10px, -12px); }
+  50%      { transform: translate(4px,   8px);  }
+  75%      { transform: translate(-8px, -6px);  }
+}
+
+@keyframes float-d {
+  0%,100% { transform: translate(0px, 0px) rotate(0deg);    }
+  40%      { transform: translate(8px, -8px) rotate(3deg);   }
+  70%      { transform: translate(-5px, 5px) rotate(-2deg);  }
+}
+
+
+/* ── 3. Subtle page background pulse ── */
+ body {
+  animation: bgPulse 12s ease infinite;
+}
+
+@keyframes bgPulse {
+  0%,100% { background-color: #eef1f1; }
+  50%      { background-color: #e4eaeb; }
+} 
+
+
+/* ── 4. Card entrance on load ── */ */
+ .card {
+  animation: cardEntrance 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes cardEntrance {
+  from { opacity: 0; transform: translateY(28px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+} 
+
