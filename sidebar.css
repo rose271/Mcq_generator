@@ -12,6 +12,12 @@
   overflow: hidden;          /* clips text during collapse */
 }
 
+ .sidebar_divider {
+      height: 1px;
+      background: rgba(255,255,255,0.07);
+      margin: 12px 20px;
+    }
+
 /* ── Collapsed state ── */
 .sidebar.collapsed {
   width: var(--sidebar-w-col);
@@ -94,10 +100,10 @@
 }
 
 .nav-label {
-  font-size: 10px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 400;
   letter-spacing: 1.5px;
-  color: rgba(255,255,255,.28);
+  color: rgba(255, 255, 255, 0.393);
   padding: 0 8px;
   margin-bottom: 8px;
   margin-top: 2px;
@@ -268,4 +274,57 @@
   opacity: 0;
   transition: opacity var(--trans);
 }
+/* Decorative shapes */
+.sidebar-deco {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
 
+.deco-shape {
+  position: absolute;
+  opacity: 0.13;
+}
+
+/* Top left square */
+.deco-rect-top-left {
+  width: 80px;
+  height: 80px;
+  background: #BDC8CA;
+  border-radius: 10px;
+  top: -20px;
+  left: -20px;
+}
+
+/* Top right square */
+.deco-rect-top-right {
+  width: 70px;
+  height: 70px;
+  background: var(--gold);
+  border-radius: 10px;
+  top: -10px;
+  right: -18px;
+}
+
+
+/* Bottom left rect */
+.deco-rect-bottom-left {
+  width: 80px;
+  height: 80px;
+  background: #FF8600;
+  border-radius: 10px;
+  bottom: 80px;
+  left: -20px;
+}
+
+/* Bottom right circle */
+.deco-circle-bottom-right {
+  width: 90px;
+  height: 90px;
+  background: #7aa8b8;
+  border-radius: 50%;
+  bottom: 40px;
+  right: -40px;
+}

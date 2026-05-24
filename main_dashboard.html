@@ -8,70 +8,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
   <link rel="Stylesheet" href="settings_modal.css">
+  <link rel="stylesheet" href="sidebar.css">
 </head>
 <body>
 
   <!-- ══ Sidebar ══════════════════════════════════════════════ -->
-  <aside class="sidebar" id="sidebar">
-    <!-- Decorative shapes -->
-<div class="sidebar-deco">
-  <div class="deco-shape deco-rect-top-left"></div>
-  <div class="deco-shape deco-rect-top-right"></div>
-  <div class="deco-shape deco-circle-left"></div>
-  <div class="deco-shape deco-rect-bottom-left"></div>
-  <div class="deco-shape deco-circle-bottom-right"></div>
-</div>
-
-    <!-- Toggle button (always visible) -->
-    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
-      <i class="fa-solid fa-bars" id="toggleIcon"></i>
-    </button>
-
-    <!-- Brand -->
-    <div class="sidebar-brand">
-      <div class="brand-icon"><i class="fa-solid fa-book-open-reader"></i></div>
-      <span class="brand-name">Question Maker</span>
-    </div>
-
-    <!-- Nav -->
-    <nav class="sidebar-nav">
-      <span class="nav-label">NAVIGATION</span>
-
-      <a href="#" class="nav-item active" data-tooltip="Dashboard">
-        <i class="fa-solid fa-house"></i>
-        <span class="nav-text">Dashboard</span>
-      </a>
-      <a href="#" class="nav-item" data-tooltip="All Files">
-        <i class="fa-solid fa-folder-open"></i>
-        <span class="nav-text">All Files</span>
-      </a>
-      <a href="#" class="nav-item" data-tooltip="Download History">
-        <i class="fa-solid fa-clock-rotate-left"></i>
-        <span class="nav-text">Download History</span>
-      </a>
-      <a href="#" class="nav-item" data-tooltip="Create Question">
-        <i class="fa-solid fa-circle-plus"></i>
-        <span class="nav-text">Create Question</span>
-      </a>
-    <a href="#" class="nav-item" data-tooltip="Settings">
-        <i class="fa-solid fa-gear"></i>
-        <span class="nav-text">Settings</span>
-      </a>
-    </nav>
-
-
-    <!-- Footer -->
-    <div class="sidebar-footer">
-      <div class="user-card" data-tooltip="Anannya · Student">
-        <div class="avatar">AN</div>
-        <div class="user-info">
-          <span class="user-name">Anannya</span>
-          <span class="user-role">Student</span>
-        </div>
-        <i class="fa-solid fa-ellipsis-vertical dot-menu"></i>
-      </div>
-    </div>
-  </aside>
+  <div id="sidebar-container"></div>
 
   <!-- Overlay for mobile -->
   <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
@@ -526,160 +468,20 @@
 
 
   <!-- Settings Modal -->
-<div class="sm-overlay" id="settingsOverlay" role="dialog"
-     aria-modal="true" aria-labelledby="settingsTitle">
-
-  <div class="sm-modal" id="settingsModal">
-
-    <!-- Header -->
-    <div class="sm-header">
-      <div class="sm-header-left">
-        <div class="sm-icon-wrap">
-          <i class="fa-solid fa-circle-user"></i>
-        </div>
-        <div>
-          <h2 id="settingsTitle">Edit Your Profile</h2>
-          <p>Update your personal information and preferences.</p>
-        </div>
-      </div>
-      <button class="sm-close" id="settingsClose" aria-label="Close">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
-
-    <!-- Body -->
-    <div class="sm-body">
-
-      <!-- Left col: form -->
-      <div class="sm-form-col">
-
-        <div class="sm-row">
-          <div class="sm-field">
-            <label for="sm-name">Full Name</label>
-            <div class="sm-input-wrap">
-              <i class="fa-solid fa-user sm-input-icon"></i>
-              <input type="text" id="sm-name" class="sm-input"
-                     placeholder="e.g. Anannya Rahman" />
-            </div>
-          </div>
-          <div class="sm-field">
-            <label for="sm-email">E-mail</label>
-            <div class="sm-input-wrap">
-              <i class="fa-solid fa-envelope sm-input-icon"></i>
-              <input type="email" id="sm-email" class="sm-input"
-                     placeholder="you@university.edu" />
-            </div>
-          </div>
-        </div>
-
-        <div class="sm-row">
-          <div class="sm-field">
-            <label for="sm-phone">Phone Number</label>
-            <div class="sm-input-wrap">
-              <i class="fa-solid fa-phone sm-input-icon"></i>
-              <input type="tel" id="sm-phone" class="sm-input"
-                     placeholder="+880 1XXX XXXXXX" />
-            </div>
-          </div>
-          <div class="sm-field">
-            <label for="sm-role">Position / Role</label>
-            <div class="sm-input-wrap">
-              <i class="fa-solid fa-id-badge sm-input-icon"></i>
-              <select id="sm-role" class="sm-input sm-select">
-                <option value="student" selected>Student</option>
-                <option value="faculty">Faculty</option>
-                <option value="ta">Teaching Assistant</option>
-                <option value="admin">Administrator</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="sm-field sm-field-full">
-          <label for="sm-institute">Institute Name</label>
-          <div class="sm-input-wrap">
-            <i class="fa-solid fa-building-columns sm-input-icon"></i>
-            <input type="text" id="sm-institute" class="sm-input"
-                   placeholder="e.g. BRAC University" />
-          </div>
-        </div>
-
-        <div class="sm-field sm-field-full">
-          <label for="sm-department">Department</label>
-          <div class="sm-input-wrap">
-            <i class="fa-solid fa-sitemap sm-input-icon"></i>
-            <input type="text" id="sm-department" class="sm-input"
-                   placeholder="e.g. Computer Science & Engineering" />
-          </div>
-        </div>
-
-      </div><!-- /sm-form-col -->
-
-      <!-- Right col: avatar -->
-      <div class="sm-avatar-col">
-        <div class="sm-avatar-ring" id="smAvatarRing">
-          <div class="sm-avatar-preview" id="smAvatarPreview">
-            <span class="sm-avatar-initials" id="smAvatarInitials"></span>
-            <img id="smAvatarImg" src="" alt="" />
-          </div>
-          <div class="sm-avatar-overlay" id="smAvatarOverlay"
-               title="Upload photo">
-            <i class="fa-solid fa-camera"></i>
-          </div>
-        </div>
-        <input type="file" id="smAvatarFile" accept="image/*"
-               style="display:none" />
-        <span class="sm-avatar-hint">Click to upload photo</span>
-        <span class="sm-avatar-hint sm-avatar-hint-sm">
-          JPG, PNG · max 2 MB
-        </span>
-
-        <!-- Divider -->
-        <div class="sm-avatar-sep"></div>
-
-        <!-- Theme toggle (bonus) -->
-        <div class="sm-pref-row">
-          <span class="sm-pref-label">
-            <i class="fa-solid fa-moon"></i> Dark Mode
-          </span>
-          <label class="sm-toggle">
-            <input type="checkbox" id="smDarkMode" />
-            <span class="sm-toggle-track"></span>
-          </label>
-        </div>
-
-        <div class="sm-pref-row">
-          <span class="sm-pref-label">
-            <i class="fa-solid fa-bell"></i> Notifications
-          </span>
-          <label class="sm-toggle">
-            <input type="checkbox" id="smNotifs" checked />
-            <span class="sm-toggle-track"></span>
-          </label>
-        </div>
-
-      </div><!-- /sm-avatar-col -->
-
-    </div><!-- /sm-body -->
-
-    <!-- Footer -->
-    <div class="sm-footer">
-      <button class="sm-btn-ghost sm-danger-link" id="smDeleteAccount">
-        <i class="fa-solid fa-triangle-exclamation"></i> Delete Account
-      </button>
-      <div class="sm-footer-right">
-        <button class="sm-btn-ghost" id="settingsCancel">Cancel</button>
-        <button class="sm-btn-primary" id="smSave">
-          <i class="fa-solid fa-floppy-disk"></i> Save Changes
-        </button>
-      </div>
-    </div>
-
-  </div><!-- /sm-modal -->
-</div><!-- /sm-overlay -->
-
+<script>
+fetch('sidebar.html')
+  .then(res => res.text())
+  .then(data => {
+    document.getElementById('sidebar-container').innerHTML = data;
+    const script = document.createElement('script');
+    script.src = 'sidebar.js';
+    document.body.appendChild(script);
+  });
+</script>
   <script src="main_dashboard.js"></script>
   <script src="settings_modal.js"></script>
+  
+
 </body>
 </html>
   

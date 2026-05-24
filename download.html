@@ -3,87 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ExamCraft — Download History</title>
+  <title>Download History</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="download.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="download.css">
 </head>
 <body>
 
-  <!-- ── SIDEBAR ── -->
-  <aside class="sidebar">
-    <div class="sidebar__brand">
-      <div class="brand-mark">
-        <span class="brand-icon">&#10022;</span>
-      </div>
-      <div class="brand-text">
-        <span class="brand-name">ExamCraft</span>
-        <span class="brand-sub">Question Suite</span>
-      </div>
-    </div>
-
-    <nav class="sidebar__nav">
-      <span class="nav-label">Menu</span>
-      <ul>
-        <li class="nav-item" data-page="all-files">
-          <span class="nav-icon">
-            <svg viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="3" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="11" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="11" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
-          </span>
-          <span>All Files</span>
-        </li>
-        <li class="nav-item active" data-page="download-history">
-          <span class="nav-icon">
-            <svg viewBox="0 0 20 20" fill="none"><path d="M10 3v9m0 0L6.5 8.5M10 12l3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          </span>
-          <span>Download History</span>
-          <span class="nav-badge" id="badge-count">0</span>
-        </li>
-        <li class="nav-item" data-page="create-question">
-          <span class="nav-icon">
-            <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M10 7v6M7 10h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          </span>
-          <span>Create Question</span>
-        </li>
-        <li class="nav-item" data-page="settings">
-          <span class="nav-icon">
-            <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 3v1.5M10 15.5V17M3 10h1.5M15.5 10H17M4.93 4.93l1.06 1.06M14.01 14.01l1.06 1.06M4.93 15.07l1.06-1.06M14.01 5.99l1.06-1.06" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          </span>
-          <span>Settings</span>
-        </li>
-      </ul>
-    </nav>
-
-    <div class="sidebar__footer">
-      <div class="user-chip">
-        <div class="user-avatar">R</div>
-        <div class="user-meta">
-          <span class="user-name">Raunaq</span>
-          <span class="user-role">Admin</span>
-        </div>
-      </div>
-    </div>
-  </aside>
-
-  <!-- ── MAIN ── -->
   <main class="main">
 
-    <!-- Hero Panel -->
+    <!-- Hero -->
     <section class="hero">
       <div class="hero__copy">
-        <p class="hero__eyebrow">Download History</p>
-        <h1 class="hero__title">Your&nbsp;<em>Downloaded</em><br>Files</h1>
-        <p class="hero__desc">All exam papers and question sets you've exported are stored here. Re-download or delete at any time.</p>
+        <h1 class="hero__title">Downloaded <span class="color_change">Files</span></h1>
+        <p class="hero__desc">All exam papers and question sets you've exported are stored here.<br> Re-download or delete at any time.</p>
       </div>
       <div class="hero__stats">
         <div class="stat-card">
           <span class="stat-value" id="stat-total">0</span>
           <span class="stat-label">Total Files</span>
         </div>
-        <div class="stat-card">
-          <span class="stat-value" id="stat-size">0 MB</span>
-          <span class="stat-label">Storage Used</span>
-        </div>
+    
         <div class="stat-card">
           <span class="stat-value" id="stat-recent">—</span>
           <span class="stat-label">Last Download</span>
@@ -93,39 +34,31 @@
       <div class="hero__orb hero__orb--2"></div>
     </section>
 
-    <!-- Search + Filters -->
+    <!-- Controls -->
     <section class="controls">
       <div class="search-wrap">
         <svg class="search-icon" viewBox="0 0 20 20" fill="none">
           <circle cx="8.5" cy="8.5" r="5" stroke="currentColor" stroke-width="1.5"/>
           <path d="M13 13l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
-        <input
-          type="text"
-          id="search-input"
-          class="search-input"
-          placeholder="Search downloaded files…"
-          autocomplete="off"
-        />
-        <kbd class="search-kbd">⌘K</kbd>
+        <input type="text" id="search-input" class="search-input" placeholder="Search downloaded files…" autocomplete="off"/>
       </div>
       <div class="filter-group">
         <button class="filter-btn active" data-filter="all">All</button>
         <button class="filter-btn" data-filter="pdf">PDF</button>
         <button class="filter-btn" data-filter="docx">DOCX</button>
-        <button class="filter-btn" data-filter="xlsx">XLSX</button>
       </div>
       <button class="clear-btn" id="clear-all-btn" title="Clear all history">
-        <svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <svg viewBox="0 0 20 20" fill="none">
+          <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
         Clear All
       </button>
     </section>
 
     <!-- File List -->
     <section class="file-section">
-      <div class="file-list" id="file-list">
-        <!-- Injected by JS -->
-      </div>
+      <div class="file-list" id="file-list"></div>
       <div class="empty-state hidden" id="empty-state">
         <div class="empty-icon">
           <svg viewBox="0 0 64 64" fill="none">
@@ -142,9 +75,7 @@
 
   </main>
 
-  <!-- Toast -->
   <div class="toast" id="toast"></div>
-
   <script src="download.js"></script>
 </body>
 </html>

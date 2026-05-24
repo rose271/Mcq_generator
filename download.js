@@ -1,8 +1,7 @@
 /* ─────────────────────────────────────────────
-   ExamCraft — Download History  |  app.js
+   ExamCraft — Download History  |  download.js
 ───────────────────────────────────────────── */
 
-// ── Sample Data ──────────────────────────────
 const STORAGE_KEY = 'examcraft_downloads';
 
 const SEED_DATA = [
@@ -16,12 +15,12 @@ const SEED_DATA = [
   { id: 'f8', name: 'Computer Networks Semester Exam Paper',     type: 'pdf',  size: 2.9, date: '2026-09-05' },
 ];
 
-// ── State ─────────────────────────────────────
+/* ── State ── */
 let files      = loadFiles();
 let query      = '';
 let activeType = 'all';
 
-// ── Persistence ───────────────────────────────
+/* ── Persistence ── */
 function loadFiles() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -35,13 +34,13 @@ function saveFiles() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(files)); } catch {}
 }
 
-// ── DOM refs ──────────────────────────────────
-const listEl    = document.getElementById('file-list');
-const emptyEl   = document.getElementById('empty-state');
-const searchEl  = document.getElementById('search-input');
-const badgeEl   = document.getElementById('badge-count');
-const toastEl   = document.getElementById('toast');
-const clearBtn  = document.getElementById('clear-all-btn');
+/* ── DOM refs ── */
+const listEl   = document.getElementById('file-list');
+const emptyEl  = document.getElementById('empty-state');
+const searchEl = document.getElementById('search-input');
+const badgeEl  = document.getElementById('badge-count');
+const toastEl  = document.getElementById('toast');
+const clearBtn = document.getElementById('clear-all-btn');
 
 const statTotal  = document.getElementById('stat-total');
 const statSize   = document.getElementById('stat-size');
@@ -49,7 +48,7 @@ const statRecent = document.getElementById('stat-recent');
 
 let toastTimer = null;
 
-// ── Render ────────────────────────────────────
+/* ── Render ── */
 function render() {
   const filtered = files.filter(f => {
     const matchType = activeType === 'all' || f.type === activeType;
@@ -63,25 +62,19 @@ function render() {
     emptyEl.classList.remove('hidden');
   } else {
     emptyEl.classList.add('hidden');
-    filtered.forEach((f, i) => {
-      const card = buildCard(f, i);
-      listEl.appendChild(card);
-    });
+    filtered.forEach((f, i) => listEl.appendChild(buildCard(f, i)));
   }
 
   updateStats();
   updateBadge();
 }
 
-// ── Card Builder ──────────────────────────────
+/* ── Card Builder ── */
 function buildCard(f, idx) {
   const card = document.createElement('div');
   card.className = `file-card type-${f.type}`;
   card.style.animationDelay = `${idx * 55}ms`;
   card.dataset.id = f.id;
-
-  const formattedDate = formatDate(f.date);
-  const formattedSize = `${f.size} MB`;
 
   card.innerHTML = `
     <div class="file-card__strip"></div>
@@ -98,9 +91,9 @@ function buildCard(f, idx) {
       <div class="file-card__meta">
         <span>${f.type.toUpperCase()}</span>
         <span class="meta-dot"></span>
-        <span>${formattedSize}</span>
+        <span>${f.size} MB</span>
         <span class="meta-dot"></span>
-        <span>${formattedDate}</span>
+        <span>${formatDate(f.date)}</span>
       </div>
     </div>
 
@@ -117,19 +110,18 @@ function buildCard(f, idx) {
           <path d="M7 13H5a1.5 1.5 0 01-1.5-1.5V5A1.5 1.5 0 015 3.5h6.5A1.5 1.5 0 0113 5v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
       </button>
-      <button class="action-btn danger" title="Remove from history" onclick="removeFile('${f.id}')">
+      <button class="action-btn danger" title="Remove" onclick="removeFile('${f.id}')">
         <svg viewBox="0 0 20 20" fill="none">
           <path d="M5 7h10M8 7V5h4v2M9 10v4M11 10v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           <rect x="5" y="7" width="10" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
         </svg>
       </button>
-    </div>
-  `;
+    </div>`;
 
   return card;
 }
 
-// ── File Icons ────────────────────────────────
+/* ── File Icons ── */
 function fileIcon(type) {
   if (type === 'pdf') return `
     <svg viewBox="0 0 20 20" fill="none">
@@ -153,21 +145,18 @@ function fileIcon(type) {
     </svg>`;
 }
 
-// ── Actions ───────────────────────────────────
+/* ── Actions ── */
 function reDownload(id) {
   const f = files.find(x => x.id === id);
-  if (!f) return;
-  showToast(`⬇ Re-downloading "${shortName(f.name)}"…`);
+  if (f) showToast(`⬇ Re-downloading "${shortName(f.name)}"…`);
 }
 
 function copyName(id) {
   const f = files.find(x => x.id === id);
   if (!f) return;
-  navigator.clipboard.writeText(f.name).then(() => {
-    showToast(`✓ Name copied to clipboard`);
-  }).catch(() => {
-    showToast(`Could not copy — try manually`);
-  });
+  navigator.clipboard.writeText(f.name)
+    .then(() => showToast('✓ Name copied to clipboard'))
+    .catch(() => showToast('Could not copy — try manually'));
 }
 
 function removeFile(id) {
@@ -185,7 +174,7 @@ function removeFile(id) {
   }
 }
 
-// ── Clear All ─────────────────────────────────
+/* ── Clear All ── */
 clearBtn.addEventListener('click', () => {
   if (files.length === 0) { showToast('Nothing to clear'); return; }
   if (!confirm(`Remove all ${files.length} file(s) from history?`)) return;
@@ -195,13 +184,13 @@ clearBtn.addEventListener('click', () => {
   showToast('History cleared');
 });
 
-// ── Search ────────────────────────────────────
+/* ── Search ── */
 searchEl.addEventListener('input', e => {
   query = e.target.value.trim();
   render();
 });
 
-// ⌘K / Ctrl+K focus shortcut
+/* ⌘K / Ctrl+K shortcut */
 document.addEventListener('keydown', e => {
   if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
     e.preventDefault();
@@ -210,7 +199,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// ── Filter Buttons ────────────────────────────
+/* ── Filter Buttons ── */
 document.querySelectorAll('.filter-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -220,15 +209,7 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
   });
 });
 
-// ── Nav items (visual only) ───────────────────
-document.querySelectorAll('.nav-item').forEach(item => {
-  item.addEventListener('click', () => {
-    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-    item.classList.add('active');
-  });
-});
-
-// ── Stats ─────────────────────────────────────
+/* ── Stats ── */
 function updateStats() {
   const total = files.length;
   const size  = files.reduce((s, f) => s + f.size, 0);
@@ -240,10 +221,12 @@ function updateStats() {
 }
 
 function updateBadge() {
-  badgeEl.textContent = files.length;
+  if (badgeEl) badgeEl.textContent = files.length;
+  /* also update sidebar badge if it exists */
+  if (typeof updateSidebarBadge === 'function') updateSidebarBadge(files.length);
 }
 
-// ── Toast ─────────────────────────────────────
+/* ── Toast ── */
 function showToast(msg) {
   toastEl.textContent = msg;
   toastEl.classList.add('visible');
@@ -251,7 +234,7 @@ function showToast(msg) {
   toastTimer = setTimeout(() => toastEl.classList.remove('visible'), 2800);
 }
 
-// ── Helpers ───────────────────────────────────
+/* ── Helpers ── */
 function formatDate(iso) {
   const d = new Date(iso + 'T00:00:00');
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -267,8 +250,10 @@ function shortName(name) {
 }
 
 function escHtml(str) {
-  return str.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return str.replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
 }
 
-// ── Init ──────────────────────────────────────
+/* ── Init ── */
 render();
