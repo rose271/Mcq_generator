@@ -203,7 +203,7 @@ function handleFile(input) {
 }
  
 function generate() {
-  alert('Question set generated! 🎉\n(Connect your backend to produce the PDF.)');
+  generateDocx();
 }
  
 // init
