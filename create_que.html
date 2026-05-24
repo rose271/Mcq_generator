@@ -4,65 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EduVault — Create Question</title>
-    <link rel="stylesheet" href="main_dashboard.css" />
-    <link rel="stylesheet" href="create_que.css" />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="sidebar.css">
+    <link rel="stylesheet" href="main_dashboard.css">
+    <link rel="stylesheet" href="create_que.css">
 
 </head>
 <body>
-    <!-- ══ Sidebar ══════════════════════════════════════════════ -->
-  <aside class="sidebar" id="sidebar">
+    
+<!-- Sidebar -->
+<div id="sidebar-container"></div>
 
-    <!-- Toggle button (always visible) -->
-    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
-      <i class="fa-solid fa-bars" id="toggleIcon"></i>
-    </button>
-
-    <!-- Brand -->
-    <div class="sidebar-brand">
-      <div class="brand-icon"><i class="fa-solid fa-book-open-reader"></i></div>
-      <span class="brand-name">Question Maker</span>
-    </div>
-
-    <!-- Nav -->
-    <nav class="sidebar-nav">
-      <span class="nav-label">NAVIGATION</span>
-
-      <a href="#" class="nav-item" data-tooltip="Dashboard">
-        <i class="fa-solid fa-house"></i>
-        <span class="nav-text">Dashboard</span>
-      </a>
-      <a href="#" class="nav-item" data-tooltip="All Files">
-        <i class="fa-solid fa-folder-open"></i>
-        <span class="nav-text">All Files</span>
-      </a>
-      <a href="#" class="nav-item" data-tooltip="Download History">
-        <i class="fa-solid fa-clock-rotate-left"></i>
-        <span class="nav-text">Download History</span>
-      </a>
-      <a href="#" class="nav-item active" data-tooltip="Create Question">
-        <i class="fa-solid fa-circle-plus"></i>
-        <span class="nav-text">Create Question</span>
-      </a>
-      <a href="#" class="nav-item" data-tooltip="Settings">
-        <i class="fa-solid fa-gear"></i>
-        <span class="nav-text">Settings</span>
-      </a>
-    </nav>
-
-    <!-- Footer -->
-    <div class="sidebar-footer">
-      <div class="user-card" data-tooltip="Anannya · Student">
-        <div class="avatar">AN</div>
-        <div class="user-info">
-          <span class="user-name">Anannya</span>
-          <span class="user-role">Student</span>
-        </div>
-        <i class="fa-solid fa-ellipsis-vertical dot-menu"></i>
-      </div>
-    </div>
-  </aside>
+<!-- Overlay for mobile -->
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
 
   <!-- MAIN -->
@@ -166,10 +121,20 @@
   <div class="dot" id="dot2"></div>
   <div class="dot" id="dot3"></div>
 </div>
+
+  <script>
+  fetch('sidebar.html')
+    .then(res => res.text())
+    .then(data => {
+      document.getElementById('sidebar-container').innerHTML = data;
+      const script = document.createElement('script');
+      script.src = 'sidebar.js';
+      document.body.appendChild(script);
+    });
+  </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/docx@8.0.4/build/index.js"></script>
-  <script src="main_dashboard.js"></script>
   <script src="create_que.js"></script>
   <script src="generate_paper.js"></script>
   
