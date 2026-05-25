@@ -4,12 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Download History</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="download.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="../css/sidebar.css">
+<link rel="stylesheet" href="../css/main_dashboard.css">
+<link rel="stylesheet" href="../css/settings_modal.css">
+<link rel="stylesheet" href="../css/download.css">
 </head>
 <body>
+
+  <div id="sidebar-container"></div>
+<div id="settings-container"></div>
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
   <main class="main">
 
@@ -147,7 +156,19 @@
 
     </div>
   </template>
+<script>
+fetch('sidebar.html')
+  .then(res => res.text())
+  .then(data => {
 
-  <script src="download.js"></script>
+    document.getElementById('sidebar-container').innerHTML = data;
+
+    const script = document.createElement('script');
+    script.src = '../js/sidebar.js';
+    document.body.appendChild(script);
+
+  });
+</script>
+<script src="../js/download.js"></script>
 </body>
 </html>

@@ -4,16 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>EduVault — Dashboard</title>
-  <link rel="stylesheet" href="main_dashboard.css" />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
-  <link rel="Stylesheet" href="settings_modal.css">
-  <link rel="stylesheet" href="sidebar.css">
+ <link rel="stylesheet" href="../css/main_dashboard.css">
+<link rel="stylesheet" href="../css/settings_modal.css">
+<link rel="stylesheet" href="../css/sidebar.css">
 </head>
 <body>
 
   <!-- ══ Sidebar ══════════════════════════════════════════════ -->
   <div id="sidebar-container"></div>
+  <div id="settings-container"></div>
 
   <!-- Overlay for mobile -->
   <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
@@ -474,12 +475,11 @@ fetch('sidebar.html')
   .then(data => {
     document.getElementById('sidebar-container').innerHTML = data;
     const script = document.createElement('script');
-    script.src = 'sidebar.js';
+        script.src = '../js/sidebar.js';
     document.body.appendChild(script);
   });
 </script>
-  <script src="main_dashboard.js"></script>
-  <script src="settings_modal.js"></script>
+  <script src="../js/main_dashboard.js"></script>
   
 
 </body>

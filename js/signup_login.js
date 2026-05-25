@@ -16,7 +16,7 @@ function switchTab(tab) {
     tabLogin.classList.add('active');
     tabSignup.classList.remove('active');
   }
-}
+}   
 
 // ===== Register Handler =====
 function handleRegister(event) {
