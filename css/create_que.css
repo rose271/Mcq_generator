@@ -1,7 +1,9 @@
 :root {
     --teal: #4a7c8e;
     --teal-dark: #3d6b7a;
+    --teal-darker: #295665;
     --teal-light: #6a9aaa;
+    --brown: #846642;
     --brown-light: #c8a882;
     --brown-lighter: #e8d5be;
     --cream: #f5ede0;
@@ -182,14 +184,17 @@ body::before {
     height: 100%; /* match row height */
     border-radius: 14px;
     padding: 20px 24px;
+    
   }
   .define-box.teal {
     background: var(--teal);
     color: #fff;
+    box-shadow: 4px 4px 0px var(--teal-darker);
   }
   .define-box.brown {
     background: var(--brown-lighter);
     border: 1.5px solid var(--brown-light);
+    box-shadow: 4px 4px 0px var(--brown);
   }
  
   .define-box label {
@@ -204,7 +209,7 @@ body::before {
  
   .define-input {
     width: 100%;
-    background: rgba(255, 255, 255, 0.911);
+    background: rgb(255, 255, 255);
     border: none;
     border-radius: 8px;
     padding: 7px 10px;
@@ -214,6 +219,7 @@ body::before {
     color: var(--text-dark);
     text-align: center;
     outline: none;
+    box-shadow: inset 3px 3px 3px rgba(0, 0, 0, 0.3);
   }
   .define-box.brown .define-input {
     background: rgba(255,255,255,0.7);
