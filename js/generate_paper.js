@@ -11,7 +11,7 @@
  */
 
 // ─── Column names must match your Excel header row exactly ───────────────────
-const COL_MARKS = ['1 Mark','2 Marks','3 Marks','4 Marks','5 Marks','6 Marks','7 Marks'];
+const COL_MARKS = ['1 Marks','2 Marks','3 Marks','4 Marks','5 Marks','6 Marks','7 Marks'];
 const COL_MCQ   = 'MCQ';
 const COL_TF    = 'T/F';
 
@@ -219,50 +219,193 @@ async function generateDocx() {
     children.push(rule());
 
     // ── Written sections ────────────────────────────────────────────────────
-    for (const ws of writtenSections) {
-      const lbl      = SEC[secIdx++] || '?';
-      const secTotal = ws.dist.reduce((a,b)=>a+b, 0);
-      children.push(sectionHead(`Section ${lbl} — Written Questions   [Total: ${secTotal} Marks]`));
-      children.push(P([TR('Answer all questions. Marks are indicated beside each question.', {italic:true})],
-        { align:AlignmentType.LEFT, before:30, after:80 }));
+for (const ws of writtenSections) {
 
-      ws.dist.forEach((m, qi) => {
-        const mark  = Math.min(7, Math.max(1, Math.round(m)));
-        const pool  = writtenPool[mark] || [];
-        const qText = pick(pool, 1, si*997 + qi*31)[0];
+  const lbl = SEC[secIdx++] || '?';
 
-        // Question line
-        children.push(P([
-          TR(`${qi+1}. `, { bold:true }),
-          TR(qText),
-          TR(`   [${m}]`, { bold:true, color:'555555' }),
-        ], { before:100, after:10 }));
+  let secTotal = 0;
 
-        if (ws.type === 'written-no-layer') {
-          // Answer lines
-          const lineCount = Math.max(3, Math.round(m * 2));
-          for (let l = 0; l < lineCount; l++) {
-            children.push(P([], { borderBottom:true, borderSize:2, borderColor:'BBBBBB', borderSpace:16, before:0, after:0 }));
-          }
-          children.push(P([], { before:10, after:16 }));
+  // ── NON-LAYER TOTAL ─────────────────────────────────────────────
+  if (ws.type === 'written-no-layer') {
 
-        } else {
-          // Layered: sub-questions (a)(b)(c)
-          const subN   = Math.min(3, Math.max(2, Math.ceil(m/2)));
-          const subMs  = distributeEvenly(m, subN);
-          ['a','b','c'].slice(0, subN).forEach((letter, li) => {
-            children.push(P([
-              TR(`(${letter}) `, { bold:true }),
-              TR('─'.repeat(55), { color:'BBBBBB' }),
-              TR(`  [${subMs[li]}]`, { bold:true, color:'555555' }),
-            ], { indent:360, before:50, after:6 }));
-          });
-          children.push(P([], { before:10, after:16 }));
-        }
-      });
+    for (let i = 0; i < ws.count; i++) {
+      secTotal += ws.dist[i % ws.dist.length];
     }
 
-    // ── MCQ section ─────────────────────────────────────────────────────────
+  }
+
+  // ── LAYER TOTAL ─────────────────────────────────────────────────
+  else {
+
+    const perQuestionMarks =
+      ws.dist.reduce((a,b)=>a+b, 0);
+
+    secTotal =
+      perQuestionMarks * ws.count;
+
+  }
+
+  children.push(
+    sectionHead(
+      `Section ${lbl} — Written Questions   [Total: ${secTotal} Marks]`
+    )
+  );
+
+  children.push(P([
+    TR(
+      'Answer all questions. Marks are indicated beside each question.',
+      { italic:true }
+    )
+  ], {
+    align:AlignmentType.LEFT,
+    before:30,
+    after:80
+  }));
+
+  // ────────────────────────────────────────────────────────────────
+  // QUESTION GENERATION
+  // ────────────────────────────────────────────────────────────────
+
+  for (let qi = 0; qi < ws.count; qi++) {
+
+    /* ============================================================
+       WRITTEN NO LAYER
+    ============================================================ */
+    if (ws.type === 'written-no-layer') {
+
+      const currentMark =
+        ws.dist[qi % ws.dist.length];
+
+      const pool =
+        writtenPool[currentMark] || [];
+
+      const qText =
+        pick(pool, 1, si*997 + qi*31)[0];
+
+      children.push(P([
+        TR(`${qi + 1}. `, { bold:true }),
+        TR(qText),
+        TR(`   [${currentMark}]`, {
+          bold:true,
+          color:'555555'
+        }),
+      ], {
+        before:100,
+        after:10
+      }));
+
+      // answer lines
+      const lineCount =
+        Math.max(3, Math.round(currentMark * 2));
+
+      for (let l = 0; l < lineCount; l++) {
+
+        children.push(P([], {
+          borderBottom:true,
+          borderSize:2,
+          borderColor:'BBBBBB',
+          borderSpace:16,
+          before:0,
+          after:0
+        }));
+
+      }
+
+      children.push(P([], {
+        before:10,
+        after:16
+      }));
+
+    }
+
+    /* ============================================================
+       WRITTEN WITH LAYER
+    ============================================================ */
+    else {
+
+      const firstMark =
+        ws.dist[0];
+
+      const pool =
+        writtenPool[firstMark] || [];
+
+      const qText =
+        pick(pool, 1, si*997 + qi*31)[0];
+
+      const matchedRow = rows.find(r =>
+        (
+          r[
+            `${firstMark} Mark${firstMark > 1 ? 's' : ''}`
+          ] || ''
+        )
+        .toString()
+        .trim() === qText
+      );
+
+      if (!matchedRow) continue;
+
+      const stimulus =
+        matchedRow['Stimulus (Case/Diagram/Table)']
+        || 'Case / Diagram';
+
+      const totalLayerMarks =
+        ws.dist.reduce((a,b)=>a+b, 0);
+
+      // Main stimulus
+      children.push(P([
+        TR(`${qi + 1}. `, { bold:true }),
+        TR(stimulus),
+        TR(`   [${totalLayerMarks}]`, {
+          bold:true,
+          color:'555555'
+        }),
+      ], {
+        before:100,
+        after:20
+      }));
+
+      // layered subquestions
+      ws.dist.forEach((neededMark, subIndex) => {
+
+        const key =
+          `${neededMark} Mark${neededMark > 1 ? 's' : ''}`;
+
+        const subQ =
+          (matchedRow[key] || '')
+            .toString()
+            .trim();
+
+        if (!subQ) return;
+
+        const letter =
+          String.fromCharCode(97 + subIndex);
+
+        children.push(P([
+          TR(`${letter}) `, { bold:true }),
+          TR(subQ),
+          TR(`   [${neededMark}]`, {
+            bold:true,
+            color:'555555'
+          }),
+        ], {
+          indent:360,
+          before:50,
+          after:8
+        }));
+
+      });
+
+      children.push(P([], {
+        before:10,
+        after:16
+      }));
+
+    }
+
+  }
+
+}
+// ── MCQ section ─────────────────────────────────────────────────────────
     if (mcqCount > 0) {
       if (!mcqPool.length) {
         children.push(P([TR('(MCQ pool empty — check Excel MCQ column)')], { before:80 }));

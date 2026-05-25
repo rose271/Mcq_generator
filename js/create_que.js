@@ -71,16 +71,48 @@ function calcTotal() {
     if (!countEl || !marksEl) return;
     const count = parseInt(countEl.value) || 0;
     const marksVal = marksEl.value.trim();
-    if (type === 'written-no-layer' || type === 'written-layer') {
-      // sum of distribution like 2+2+3+3
-      const parts = marksVal.split('+').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
-      total += parts.reduce((a,b)=>a+b, 0);
-    } else {
-      // count * marks each
-      const m = parseFloat(marksVal) || 0;
-      total += count * m;
-    }
-  });
+/* ───────── WRITTEN WITH LAYER ───────── */
+if (type === 'written-layer') {
+
+  const parts = marksVal
+    .split('+')
+    .map(v => parseFloat(v.trim()))
+    .filter(v => !isNaN(v));
+
+  const marksPerQuestion =
+    parts.reduce((a,b)=>a+b, 0);
+
+  total += count * marksPerQuestion;
+
+}
+
+/* ───────── WRITTEN NO LAYER ───────── */
+else if (type === 'written-no-layer') {
+
+  const parts = marksVal
+    .split('+')
+    .map(v => parseFloat(v.trim()))
+    .filter(v => !isNaN(v));
+
+  if (parts.length === 0) return;
+
+  for (let i = 0; i < count; i++) {
+
+    total += parts[i % parts.length];
+
+  }
+
+}
+
+/* ───────── MCQ / TRUE FALSE ───────── */
+else {
+
+  const m = parseFloat(marksVal) || 0;
+
+  total += count * m;
+
+}
+});
   const el = document.getElementById('totalMarksDisplay');
   if (el) el.textContent = total || 0;
   return total;
@@ -117,9 +149,62 @@ function buildPreview() {
       if (!marksEl || !countEl) return;
       const parts = marksEl.value.split('+').map(v=>v.trim()).filter(Boolean);
       const count = parseInt(countEl.value) || parts.length || 3;
-      for (let i = 0; i < Math.min(count, parts.length || count, 6); i++) {
-        html += `<div class="q-line"><span>${i+1}. ${'─'.repeat(40)}</span><span>${parts[i]||''}</span></div>`;
-      }
+      // for (let i = 0; i < Math.min(count, parts.length || count, 6); i++) {
+      //   html += `<div class="q-line"><span>${i+1}. ${'─'.repeat(40)}</span><span>${parts[i]||''}</span></div>`;
+      // }
+      /* ───────── WRITTEN WITH LAYER ───────── */
+if (type === 'written-layer') {
+
+  for (let i = 0; i < count; i++) {
+
+    html += `
+      <div class="layer-main-q">
+        <strong>${i + 1}.</strong>
+        Stimulus / Case / Diagram
+      </div>
+    `;
+
+    parts.forEach((mark, idx) => {
+
+      const letter =
+        String.fromCharCode(97 + idx);
+
+      html += `
+        <div class="layer-sub-q">
+          <span>
+            ${letter}) ─────────────────────────
+          </span>
+
+        <span class="layer-mark">
+  [${mark}]
+</span>
+        </div>
+      `;
+
+    });
+
+  }
+
+}
+
+/* ───────── WRITTEN NO LAYER ───────── */
+else {
+
+for (let i = 0; i < Math.min(count, 12); i++) {
+    html += `
+      <div class="q-line">
+        <span>
+          ${i + 1}. ${'─'.repeat(40)}
+        </span>
+
+        <span>
+${parts[i % parts.length] || ''}
+        </span>
+      </div>
+    `;
+  }
+
+}
     });
   }
  

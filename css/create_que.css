@@ -494,3 +494,25 @@ body::before {
  
   /* ── WIDER CARD FOR LATER STEPS ── */
   .card.wide { max-width: 660px; }
+
+  .layer-main-q{
+  margin-top: 18px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.layer-sub-q{
+  margin-left: 28px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #4f5f69;
+}
+
+.layer-mark{
+  font-weight: 700;
+  color: var(--teal-dark);
+}
