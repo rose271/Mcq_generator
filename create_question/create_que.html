@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduVault — Create Question</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="../sidebar.css">
+    <link rel="stylesheet" href="../main_dashboard.css">
+    <link rel="stylesheet" href="create_que.css">
+
+</head>
+<body>
+    
+<!-- Sidebar -->
+<div id="sidebar-container"></div>
+
+<!-- Overlay for mobile -->
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+
+  <!-- MAIN -->
+<div class="page-wrapper">
+ 
+  <!-- STEP 1: Choose type -->
+  <div class="card step active" id="step1">
+    <div class="card-title">Select your <strong>Question Type</strong></div>
+    <div class="card-subtitle">What type of questions do you want to include?</div>
+    <div class="qt-grid">
+      <div class="qt-card" data-type="written-no-layer" onclick="toggleType(this)">
+        <span class="check"></span>
+        <span class="qt-label">Written<br>(no layer)</span>
+        <div class="qt-thumb"></div>
+      </div>
+      <div class="qt-card" data-type="written-layer" onclick="toggleType(this)">
+        <span class="check"></span>
+        <span class="qt-label">Written<br>(with layer)</span>
+        <div class="qt-thumb"></div>
+      </div>
+      <div class="qt-card" data-type="mcq" onclick="toggleType(this)">
+        <span class="check"></span>
+        <span class="qt-label">MCQs</span>
+        <div class="qt-thumb"></div>
+      </div>
+      <div class="qt-card" data-type="truefalse" onclick="toggleType(this)">
+        <span class="check"></span>
+        <span class="qt-label">True/false</span>
+        <div class="qt-thumb"></div>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- STEP 2: Define Set & Marks -->
+  <div class="card wide step" id="step2">
+    <div class="card-title">Distribute <strong>Marks</strong></div>
+    <div class="card-subtitle"></div>
+    <div class="pairs-layout" id="marksLayout">
+      <!-- dynamically filled -->
+    </div>
+  </div>
+ 
+  <!-- STEP 3: Layout -->
+  <div class="card wide step" id="step3">
+    <div class="card-title">Set the Question <strong>Layout</strong></div>
+    <div class="layout-meta">
+      <div style="display:flex;align-items:center">
+        <span class="meta-label">Total marks:</span>
+        <span class="meta-val" id="totalMarksDisplay">0</span>
+      </div>
+      <div class="duration-wrap">
+        <span class="meta-label">Duration:</span>
+        <input class="duration-input" type="number" value="30" min="5" max="300" id="durationInput">
+        <select class="duration-unit" id="durationUnit">
+          <option value="min">min</option>
+          <option value="hr">hr</option>
+          <option value="sec">sec</option>
+        </select>
+      </div>
+    </div>
+    <div class="exam-desc-box">
+      <h3>Exam Description</h3>
+      <div class="exam-field"><label>1. Institution Name:</label><input type="text" placeholder="e.g., Institute of Information Te..." id="instName"></div>
+      <div class="exam-field"><label>2. Exam Name:</label><input type="text" placeholder="e.g., BSc. in ICT" id="examName"></div>
+      <div class="exam-field"><label>3. Course Code:</label><input type="text" placeholder="e.g., ICT-3101" id="courseCode"></div>
+      <div class="exam-field"><label>4. Course Title:</label><input type="text" placeholder="e.g., Operating System" id="courseTitle"></div>
+      <div class="exam-field"><label>5. Exam Year:</label><input type="text" placeholder="e.g., 2025" id="examYear"></div>
+    </div>
+  </div>
+ 
+  <!-- STEP 4: Upload & Preview -->
+  <div class="card wide step" id="step4">
+    <div class="card-title">File upload &amp; Question Set</div>
+    <div class="upload-area">
+      <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Upload</button>
+      <span class="upload-filename" id="fileNameDisplay">No file has been chosen</span>
+      <input type="file" id="fileInput" style="display:none" onchange="handleFile(this)">
+      <div class="unique-set-wrap">
+        <label>Number of Unique<br>Question Set:</label>
+        <input type="number" placeholder="e.g., 5" id="numSets" min="1" value="">
+      </div>
+    </div>
+    <div class="preview-label">Preview:</div>
+    <div class="preview-paper" id="previewPaper">
+      <!-- filled dynamically -->
+    </div>
+  </div>
+ 
+</div>
+ 
+<!-- NAV BUTTONS -->
+<div class="nav-btns">
+  <button class="btn-nav hidden" id="backBtn" onclick="goBack()">&#8249; Back</button>
+  <button class="btn-nav hidden" id="nextBtn" onclick="goNext()">Next &#8250;</button>
+</div>
+ 
+<!-- STEP DOTS -->
+<div class="step-dots">
+  <div class="dot active" id="dot0"></div>
+  <div class="dot" id="dot1"></div>
+  <div class="dot" id="dot2"></div>
+  <div class="dot" id="dot3"></div>
+</div>
+
+  <script>
+  fetch('../sidebar.html')
+    .then(res => res.text())
+    .then(data => {
+      document.getElementById('sidebar-container').innerHTML = data;
+      const script = document.createElement('script');
+      script.src = 'sidebar.js';
+      document.body.appendChild(script);
+    });
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx@8.0.4/build/index.js"></script>
+  <script src="create_que.js"></script>
+  <script src="generate_paper.js"></script>
+  
+</body>
+</html>
