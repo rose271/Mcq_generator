@@ -351,7 +351,56 @@ async function generateDocx() {
     const fname = `${courseCode || 'QuestionPaper'}_${examYear || new Date().getFullYear()}.docx`;
     saveAs(blob, fname);
     console.log('[generate] done →', fname);
+
+    // ── ✅ NEW: Save to Download History ──────────────────────────────────────
+    addToDownloadHistory({
+      name: fname.replace('.docx', ''),   // display name without extension
+      type: 'docx',
+      size: parseFloat((blob.size / (1024 * 1024)).toFixed(2)),  // MB
+      date: new Date().toISOString().split('T')[0],               // YYYY-MM-DD
+    });
+    // ─────────────────────────────────────────────────────────────────────────
+
   } catch(ex) {
     err('File save failed:\n' + ex.message);
   }
+}
+
+// ── Download History helper ────────────────────────────────────────────────────
+// Writes a new entry into the same localStorage key that download.js reads.
+// Safe to call from any page — download.js will pick it up when the user visits.
+function addToDownloadHistory(entry) {
+  const STORAGE_KEY  = 'examcraft_downloads';
+  const SEED_VERSION = 'v1';
+
+  try {
+    // Load existing list (ignore seed-version lock so we keep user's list)
+    let existing = [];
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) existing = parsed;
+    }
+
+    // Build new record
+    const newRecord = {
+      id:   'gen_' + Date.now(),          // unique id (won't clash with seed f1–f7)
+      name: entry.name,
+      type: entry.type,
+      size: entry.size,
+      date: entry.date,
+    };
+
+    // Prepend so newest appears first
+    existing.unshift(newRecord);
+
+    // Save back (also update version so download.js doesn't wipe with seed data)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+    localStorage.setItem(STORAGE_KEY + '_version', SEED_VERSION);
+
+    console.log('[history] saved →', newRecord);
+  } catch(ex) {
+    console.warn('[history] could not save to localStorage:', ex);
+  }
+
 }

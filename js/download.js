@@ -24,17 +24,18 @@ const SEED_DATA = [
 ];
 
 /* ── Persistence ── */
+// REPLACE the existing loadFiles() with this:
 function loadFiles() {
   try {
-    const savedVersion = localStorage.getItem(STORAGE_KEY + '_version');
-    const raw          = localStorage.getItem(STORAGE_KEY);
-    if (savedVersion !== SEED_VERSION || !raw) {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      // First ever visit — seed with demo data
       localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_DATA));
       localStorage.setItem(STORAGE_KEY + '_version', SEED_VERSION);
       return [...SEED_DATA];
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [...SEED_DATA];
+    return Array.isArray(parsed) && parsed.length ? parsed : [...SEED_DATA];
   } catch {
     return [...SEED_DATA];
   }
