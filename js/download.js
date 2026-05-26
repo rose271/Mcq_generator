@@ -5,7 +5,22 @@
 /* ══════════════════════════════════════════
    NAVBAR JS  (merged from navbar.html)
 ══════════════════════════════════════════ */
+// ── Load settings modal fragment ──
+// ── Load settings modal fragment ──
+fetch('settings_modal.html')
+  .then(r => r.text())
+  .then(html => {
+    const clean = html
+      .replace(/<link[^>]*>/gi, '')
+      .replace(/<script[\s\S]*?<\/script>/gi, '');
+    document.getElementById('settings-modal-mount').innerHTML = clean;
 
+    // ← Load the JS only AFTER HTML is in the DOM
+    const script = document.createElement('script');
+    script.src = '../js/settings_modal.js';
+    document.body.appendChild(script);
+  })
+  .catch(err => console.error('Failed to load settings modal:', err));
 // ── Profile dropdown ──
 // ── Navbar auto-theme based on scroll position ──
 (function () {
@@ -52,6 +67,21 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     dropdown.classList.remove('show');
     profileBtn.classList.remove('open');
+  }
+});
+// ── Settings modal trigger ──
+document.querySelectorAll('.dropdown-item, .mobile-menu a').forEach(item => {
+  if (item.textContent.trim() === 'Settings') {
+    item.addEventListener('click', e => {
+      e.preventDefault();
+      // close profile dropdown first
+      document.getElementById('profileDropdown')?.classList.remove('show');
+      document.getElementById('profileBtn')?.classList.remove('open');
+      // open modal
+      if (typeof window.openSettingsModal === 'function') {
+        window.openSettingsModal();
+      }
+    });
   }
 });
 
@@ -335,3 +365,4 @@ function shortName(name) {
 
 /* ── Init ── */
 render();
+
