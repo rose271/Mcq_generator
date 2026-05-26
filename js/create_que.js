@@ -3,6 +3,19 @@ const totalSteps = 4;
 let selectedTypes = new Set();
 let questionCounts = {};
 let marksData = {};
+
+ 
+/* ── State ─────────────────────────────────────────────────────────── */
+// Add these to your existing state variables at the top of your JS:
+//
+//   let layeredSameOrDiff = 'same';        // 'same' | 'different'
+//   let layeredTotalMarks = 0;             // total marks per layered question
+//   let layeredDistributions = {};         // { 0: '1+2+3+4', 1: '2+3+5', ... }
+//   let layeredCurrentQIndex = 0;          // which question is shown in the carousel
+let layeredSameOrDiff    = 'same';
+let layeredTotalMarks    = 0;
+let layeredDistributions = {};
+let layeredCurrentQIndex = 0;
  
 function toggleType(card) {
   const type = card.dataset.type;
@@ -26,17 +39,30 @@ function updateNextBtn() {
 function buildMarksLayout() {
   const layout = document.getElementById('marksLayout');
   layout.innerHTML = '';
-  const types = [...selectedTypes];
-  types.forEach(type => {
-    const isWritten = type.startsWith('written');
-    const isMCQ = type === 'mcq';
-    const isTF = type === 'truefalse';
  
+  const types = [...selectedTypes];
+ 
+  types.forEach(type => {
+    if (type === 'written-layer') {
+      layout.appendChild(buildLayeredRow());
+      return;
+    }
+ 
+    /* ── unchanged rows for all other types ─────────────────────────── */
     let leftLabel = '', rightLabel = '', rightPlaceholder = '';
-    if (type === 'written-no-layer') { leftLabel = 'How many Written\n(no layer)?'; rightLabel = 'Marks Distribution'; rightPlaceholder = '2+2+3+3'; }
-    else if (type === 'written-layer') { leftLabel = 'How many Written\n(with layer)?'; rightLabel = 'Marks Distribution'; rightPlaceholder = '4+6'; }
-    else if (isMCQ) { leftLabel = 'How many MCQs?'; rightLabel = 'Marks per each MCQ'; rightPlaceholder = '0.5'; }
-    else if (isTF) { leftLabel = 'How many True/False?'; rightLabel = 'Marks per each T/F'; rightPlaceholder = '1'; }
+    if (type === 'written-no-layer') {
+      leftLabel = 'How many Written\n(no layer)?';
+      rightLabel = 'Marks Distribution';
+      rightPlaceholder = '2+2+3+3';
+    } else if (type === 'mcq') {
+      leftLabel = 'How many MCQs?';
+      rightLabel = 'Marks per each MCQ';
+      rightPlaceholder = '0.5';
+    } else if (type === 'truefalse') {
+      leftLabel = 'How many True/False?';
+      rightLabel = 'Marks per each T/F';
+      rightPlaceholder = '1';
+    }
  
     const row = document.createElement('div');
     row.className = 'pair-row';
@@ -48,10 +74,10 @@ function buildMarksLayout() {
       </div>
       <div class="pair-arrow">
         <svg width="100" height="100" viewBox="0 0 100 100">
-          <path d="M10,40 Q50,0 92,40" fill="none" stroke="#7a9aaa" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <path d="M10,40 Q50,0 92,40" fill="none" stroke="#7a9aaa"
+                stroke-width="1.5" stroke-dasharray="4,3"/>
           <polygon points="82,38 92,32 92,42" fill="#7a9aaa"/>
         </svg>
-
       </div>
       <div class="define-box brown">
         <label style="color:var(--text-dark)">${rightLabel}</label>
@@ -62,57 +88,303 @@ function buildMarksLayout() {
     layout.appendChild(row);
   });
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   buildLayeredRow()
+   Builds the full interactive block for written-layer questions.
+   Returns a <div> ready to be appended into #marksLayout.
+   ══════════════════════════════════════════════════════════════════════ */
+function buildLayeredRow() {
+  const wrapper = document.createElement('div');
+  wrapper.id = 'layered-block';
+  wrapper.style.cssText = 'display:flex;flex-direction:column;gap:20px;';
  
+  /* ── Row 1: count  ←→  Same / Different toggle ──────────────────── */
+  const row1 = document.createElement('div');
+  row1.className = 'pair-row';
+  row1.innerHTML = `
+    <div class="define-box teal">
+      <label>How many Written<br>(with layer)?</label>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <input class="define-input" type="text" value="" placeholder="e.g., 4"
+          id="count_written-layer"
+          oninput="onLayeredCountChange()"
+          style="flex:1;">
+        <button class="layered-icon-btn" onclick="onLayeredCountConfirm()" title="Confirm count">&#x2192;</button>
+      </div>
+    </div>
+ 
+    <div class="pair-arrow">
+      <svg width="100" height="100" viewBox="0 0 100 100">
+        <path d="M10,40 Q50,0 92,40" fill="none" stroke="#7a9aaa"
+              stroke-width="1.5" stroke-dasharray="4,3"/>
+        <polygon points="82,38 92,32 92,42" fill="#7a9aaa"/>
+      </svg>
+    </div>
+ 
+    <div class="define-box brown" style="display:flex;flex-direction:column;justify-content:center;gap:10px;">
+      <label style="color:var(--text-dark);">
+        Will the marks for each layered question be same?
+      </label>
+      <div class="toggle-group" id="layered-toggle">
+        <button class="toggle-btn active" onclick="setLayeredMode('same')">Same</button>
+        <button class="toggle-btn"        onclick="setLayeredMode('different')">Different</button>
+      </div>
+    </div>
+  `;
+  wrapper.appendChild(row1);
+ 
+  /* ── Row 2 (dynamic): appears after count is confirmed ──────────── */
+  /* rendered by renderLayeredSecondRow() */
+  const row2holder = document.createElement('div');
+  row2holder.id = 'layered-second-row';
+  wrapper.appendChild(row2holder);
+ 
+  return wrapper;
+}
+ 
+ 
+/* ══════════════════════════════════════════════════════════════════════
+   renderLayeredSecondRow()
+   Called whenever count or same/diff changes.
+   ══════════════════════════════════════════════════════════════════════ */
+function renderLayeredSecondRow() {
+  const holder = document.getElementById('layered-second-row');
+  if (!holder) return;
+ 
+  const countEl = document.getElementById('count_written-layer');
+  const count = parseInt(countEl ? countEl.value : 0) || 0;
+  if (count < 1) { holder.innerHTML = ''; return; }
+ 
+  /* ── SAME mode ─────────────────────────────────────────────────── */
+  if (layeredSameOrDiff === 'same') {
+    holder.innerHTML = `
+      <div style="display:flex;justify-content:left;">
+        <svg width="100" height="60" viewBox="0 0 100 60" style="display:block;">
+          <path d="M40,0 Q50,34 100,58" fill="none" stroke="#7a9aaa"
+                stroke-width="1.5" stroke-dasharray="4,3"/>
+          <polygon points="90,59 97,50 100,60" fill="#7a9aaa"/>
+        </svg>
+      </div>
+      <div style="display:flex;justify-content:center;">
+        <div class="layered-card brown" id="layered-same-card">
+          <div class="layered-card-title">Total Marks for<br>each layered Question</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:8px;">
+            <input class="define-input" type="text" value="${layeredTotalMarks || ''}"
+              id="layered-total-input" placeholder="e.g., 10"
+              oninput="onLayeredTotalChange()"
+              style="flex:1;">
+            <button class="layered-icon-btn dark" onclick="onLayeredTotalConfirm()" title="Confirm total">&#x2192;</button>
+          </div>
+        </div>
+      </div>
+      <div id="layered-dist-area"></div>
+    `;
+    /* re-render dist area if total already set */
+    if (layeredTotalMarks > 0) renderLayeredDistArea();
+    return;
+  }
+ 
+  /* ── DIFFERENT mode ──────────────────────────────────────────────── */
+  /* First we still ask total marks (same UX), then show per-Q carousel */
+  holder.innerHTML = `
+    <div style="display:flex;justify-content:left;">
+        <svg width="100" height="60" viewBox="0 0 100 60" style="display:block;">
+          <path d="M40,0 Q50,34 100,58" fill="none" stroke="#7a9aaa"
+                stroke-width="1.5" stroke-dasharray="4,3"/>
+          <polygon points="90,59 97,50 100,60" fill="#7a9aaa"/>
+        </svg>
+    </div>
+    <div style="display:flex;justify-content:center;">
+      <div class="layered-card brown">
+        <div class="layered-card-title">Total Marks for<br>each layered Question</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:8px;">
+          <input class="define-input" type="text" value="${layeredTotalMarks || ''}"
+            id="layered-total-input" placeholder="e.g., 10"
+            oninput="onLayeredTotalChange()"
+            style="flex:1;">
+          <button class="layered-icon-btn dark" onclick="onLayeredTotalConfirm()" title="Confirm total">&#x2192;</button>
+        </div>
+      </div>
+    </div>
+    <div id="layered-dist-area"></div>
+  `;
+  if (layeredTotalMarks > 0) renderLayeredDistArea();
+}
+ 
+ 
+/* ══════════════════════════════════════════════════════════════════════
+   renderLayeredDistArea()
+   Below the total-marks card. Shows ONE shared dist box (same mode)
+   or a carousel of per-question boxes (different mode).
+   ══════════════════════════════════════════════════════════════════════ */
+function renderLayeredDistArea() {
+  const area = document.getElementById('layered-dist-area');
+  if (!area) return;
+ 
+  const countEl = document.getElementById('count_written-layer');
+  const count   = parseInt(countEl ? countEl.value : 0) || 0;
+ 
+  /* ── SAME: one distribution box, no carousel ─────────────────────── */
+  if (layeredSameOrDiff === 'same') {
+    const dist = layeredDistributions['shared'] || '';
+    area.innerHTML = `
+      <div style="display:flex;justify-content:center;">
+        <svg width="100" height="60" viewBox="0 0 100 60" style="display:block;">
+          <path d="M50,2 Q20,30 50,58" fill="none" stroke="#7a9aaa"
+                stroke-width="1.5" stroke-dasharray="4,3"/>
+          <polygon points="42,55 50,58 52,50" fill="#7a9aaa"/>
+        </svg>
+      </div>
+      <div style="display:flex;justify-content:center;">
+        <div class="layered-card brown">
+          <div class="layered-card-title">Marks Distribution</div>
+          <div class="layered-card-sub">Total marks: ${layeredTotalMarks}</div>
+          <input class="define-input" type="text" value="${dist}"
+            placeholder="e.g., 1+2+3+4"
+            id="layered-dist-shared"
+            oninput="layeredDistributions['shared']=this.value; calcTotal();"
+            style="margin-top:8px;">
+        </div>
+      </div>
+    `;
+    return;
+  }
+ 
+  /* ── DIFFERENT: per-question carousel ───────────────────────────── */
+  /* initialise missing entries */
+  for (let i = 0; i < count; i++) {
+    if (layeredDistributions[i] === undefined) layeredDistributions[i] = '';
+  }
+ 
+  const idx  = layeredCurrentQIndex;
+  const dist = layeredDistributions[idx] || '';
+  const hasPrev = idx > 0;
+  const hasNext = idx < count - 1;
+ 
+  area.innerHTML = `
+    <div style="display:flex;justify-content:center;">
+      <svg width="100" height="60" viewBox="0 0 100 60" style="display:block;">
+        <path d="M50,2 Q20,30 50,58" fill="none" stroke="#7a9aaa"
+              stroke-width="1.5" stroke-dasharray="4,3"/>
+        <polygon points="42,55 50,58 52,50" fill="#7a9aaa"/>
+      </svg>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px;">
+      <button class="carousel-arrow" onclick="layeredCarouselPrev()"
+        ${hasPrev ? '' : 'disabled'} title="Previous question">&#8249;</button>
+ 
+      <div class="layered-card brown">
+        <div class="layered-card-title">Marks Distribution of Q-${idx + 1}</div>
+        <div class="layered-card-sub">Total marks: ${layeredTotalMarks}</div>
+        <input class="define-input" type="text" value="${dist}"
+          placeholder="e.g., 1+2+3+4"
+          id="layered-dist-q${idx}"
+          oninput="layeredDistributions[${idx}]=this.value; calcTotal();"
+          style="margin-top:8px;">
+      </div>
+ 
+      <button class="carousel-arrow" onclick="layeredCarouselNext()"
+        ${hasNext ? '' : 'disabled'} title="Next question">&#8250;</button>
+    </div>
+  `;
+}
+ 
+ 
+/* ══════════════════════════════════════════════════════════════════════
+   Event handlers
+   ══════════════════════════════════════════════════════════════════════ */
+ 
+function onLayeredCountChange() {
+  /* reset distributions when count changes */
+  layeredDistributions = {};
+  layeredCurrentQIndex = 0;
+  layeredTotalMarks    = 0;
+  renderLayeredSecondRow();
+  calcTotal();
+}
+ 
+function onLayeredCountConfirm() {
+  renderLayeredSecondRow();
+}
+ 
+function setLayeredMode(mode) {
+  layeredSameOrDiff    = mode;
+  layeredDistributions = {};
+  layeredCurrentQIndex = 0;
+ 
+  /* update toggle button styles */
+  document.querySelectorAll('#layered-toggle .toggle-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.toLowerCase() === mode);
+  });
+ 
+  renderLayeredSecondRow();
+  calcTotal();
+}
+ 
+function onLayeredTotalChange() {
+  const el = document.getElementById('layered-total-input');
+  layeredTotalMarks = parseFloat(el ? el.value : 0) || 0;
+  calcTotal();
+}
+ 
+function onLayeredTotalConfirm() {
+  const el = document.getElementById('layered-total-input');
+  layeredTotalMarks = parseFloat(el ? el.value : 0) || 0;
+  renderLayeredDistArea();
+  calcTotal();
+}
+ 
+function layeredCarouselPrev() {
+  /* save current before navigating */
+  const curInput = document.getElementById(`layered-dist-q${layeredCurrentQIndex}`);
+  if (curInput) layeredDistributions[layeredCurrentQIndex] = curInput.value;
+  if (layeredCurrentQIndex > 0) {
+    layeredCurrentQIndex--;
+    renderLayeredDistArea();
+  }
+}
+ 
+function layeredCarouselNext() {
+  const curInput = document.getElementById(`layered-dist-q${layeredCurrentQIndex}`);
+  if (curInput) layeredDistributions[layeredCurrentQIndex] = curInput.value;
+ 
+  const countEl = document.getElementById('count_written-layer');
+  const count = parseInt(countEl ? countEl.value : 0) || 0;
+  if (layeredCurrentQIndex < count - 1) {
+    layeredCurrentQIndex++;
+    renderLayeredDistArea();
+  }
+}
+ 
+
 function calcTotal() {
   let total = 0;
+ 
   selectedTypes.forEach(type => {
-    const countEl = document.getElementById('count_'+type);
-    const marksEl = document.getElementById('marks_'+type);
+    if (type === 'written-layer') {
+      /* ── layered: count × totalMarks ──────────────────────────────── */
+      const countEl = document.getElementById('count_written-layer');
+      const count   = parseInt(countEl ? countEl.value : 0) || 0;
+      total += count * (layeredTotalMarks || 0);
+      return;
+    }
+ 
+    const countEl = document.getElementById('count_' + type);
+    const marksEl = document.getElementById('marks_' + type);
     if (!countEl || !marksEl) return;
-    const count = parseInt(countEl.value) || 0;
+    const count    = parseInt(countEl.value) || 0;
     const marksVal = marksEl.value.trim();
-/* ───────── WRITTEN WITH LAYER ───────── */
-if (type === 'written-layer') {
-
-  const parts = marksVal
-    .split('+')
-    .map(v => parseFloat(v.trim()))
-    .filter(v => !isNaN(v));
-
-  const marksPerQuestion =
-    parts.reduce((a,b)=>a+b, 0);
-
-  total += count * marksPerQuestion;
-
-}
-
-/* ───────── WRITTEN NO LAYER ───────── */
-else if (type === 'written-no-layer') {
-
-  const parts = marksVal
-    .split('+')
-    .map(v => parseFloat(v.trim()))
-    .filter(v => !isNaN(v));
-
-  if (parts.length === 0) return;
-
-  for (let i = 0; i < count; i++) {
-
-    total += parts[i % parts.length];
-
-  }
-
-}
-
-/* ───────── MCQ / TRUE FALSE ───────── */
-else {
-
-  const m = parseFloat(marksVal) || 0;
-
-  total += count * m;
-
-}
-});
+ 
+    if (type === 'written-no-layer') {
+      const parts = marksVal.split('+').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
+      total += parts.reduce((a, b) => a + b, 0);
+    } else {
+      const m = parseFloat(marksVal) || 0;
+      total += count * m;
+    }
+  });
+ 
   const el = document.getElementById('totalMarksDisplay');
   if (el) el.textContent = total || 0;
   return total;
@@ -143,69 +415,34 @@ function buildPreview() {
   const writtenTypes = [...selectedTypes].filter(t => t.startsWith('written'));
   if (writtenTypes.length > 0) {
     html += `<div class="section-head">Written Part:</div>`;
-    writtenTypes.forEach(type => {
-      const marksEl = document.getElementById('marks_'+type);
-      const countEl = document.getElementById('count_'+type);
-      if (!marksEl || !countEl) return;
-      const parts = marksEl.value.split('+').map(v=>v.trim()).filter(Boolean);
-      const count = parseInt(countEl.value) || parts.length || 3;
-      // for (let i = 0; i < Math.min(count, parts.length || count, 6); i++) {
-      //   html += `<div class="q-line"><span>${i+1}. ${'─'.repeat(40)}</span><span>${parts[i]||''}</span></div>`;
-      // }
-      /* ───────── WRITTEN WITH LAYER ───────── */
-if (type === 'written-layer') {
-
+    function buildPreviewLayeredSection(html) {
+  const countEl = document.getElementById('count_written-layer');
+  const count   = parseInt(countEl ? countEl.value : 0) || 0;
+  if (count < 1) return html;
+ 
+  html += `<div class="section-head">Written (Layered) Part:</div>`;
+ 
   for (let i = 0; i < count; i++) {
-
-    html += `
-      <div class="layer-main-q">
-        <strong>${i + 1}.</strong>
-        Stimulus / Case / Diagram
-      </div>
-    `;
-
-    parts.forEach((mark, idx) => {
-
-      const letter =
-        String.fromCharCode(97 + idx);
-
-      html += `
-        <div class="layer-sub-q">
-          <span>
-            ${letter}) ─────────────────────────
-          </span>
-
-        <span class="layer-mark">
-  [${mark}]
-</span>
-        </div>
-      `;
-
-    });
-
+    let dist;
+    if (layeredSameOrDiff === 'same') {
+      dist = layeredDistributions['shared'] || '';
+    } else {
+      dist = layeredDistributions[i] || '';
+    }
+    const parts  = dist.split('+').map(v => v.trim()).filter(Boolean);
+    const layers = parts.length || 1;
+ 
+    html += `<div class="q-line"><strong>Q${i + 1}.</strong> [${layeredTotalMarks} marks total]</div>`;
+    for (let j = 0; j < layers; j++) {
+      const mark = parts[j] || '';
+      html += `<div class="q-line" style="padding-left:24px;">
+        <span>${String.fromCharCode(97 + j)}. ${'─'.repeat(36)}</span>
+        <span>${mark}</span>
+      </div>`;
+    }
   }
-
+  return html;
 }
-
-/* ───────── WRITTEN NO LAYER ───────── */
-else {
-
-for (let i = 0; i < Math.min(count, 12); i++) {
-    html += `
-      <div class="q-line">
-        <span>
-          ${i + 1}. ${'─'.repeat(40)}
-        </span>
-
-        <span>
-${parts[i % parts.length] || ''}
-        </span>
-      </div>
-    `;
-  }
-
-}
-    });
   }
  
   if (selectedTypes.has('mcq')) {
