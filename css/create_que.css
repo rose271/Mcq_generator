@@ -1,7 +1,9 @@
 :root {
     --teal: #4a7c8e;
     --teal-dark: #3d6b7a;
+    --teal-darker: #295665;
     --teal-light: #6a9aaa;
+    --brown: #846642;
     --brown-light: #c8a882;
     --brown-lighter: #e8d5be;
     --cream: #f5ede0;
@@ -30,7 +32,7 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(255, 255, 255, 0.7); /* 0.5 = 50% opacity */
+    background-color: rgba(255, 255, 255, 0.779); /* 0.5 = 50% opacity */
     backdrop-filter: blur(1px); /* Blur effect */
     -webkit-backdrop-filter: blur(1px); /*Safari support*/
     z-index: 0;
@@ -64,7 +66,7 @@ body::before {
     padding: 44px 56px 48px;
     width: 100%;
     max-width: 600px;
-    box-shadow: 0 8px 40px rgba(60,90,110,0.13);
+    box-shadow: 0px 0px 40px rgba(10, 10, 10, 0.276);
   }
  
   .card-title {
@@ -182,14 +184,17 @@ body::before {
     height: 100%; /* match row height */
     border-radius: 14px;
     padding: 20px 24px;
+    
   }
   .define-box.teal {
     background: var(--teal);
     color: #fff;
+    box-shadow: 4px 4px 0px var(--teal-darker);
   }
   .define-box.brown {
     background: var(--brown-lighter);
     border: 1.5px solid var(--brown-light);
+    box-shadow: 4px 4px 0px var(--brown);
   }
  
   .define-box label {
@@ -204,7 +209,7 @@ body::before {
  
   .define-input {
     width: 100%;
-    background: rgba(255, 255, 255, 0.911);
+    background: rgb(255, 255, 255);
     border: none;
     border-radius: 8px;
     padding: 7px 10px;
@@ -214,6 +219,7 @@ body::before {
     color: var(--text-dark);
     text-align: center;
     outline: none;
+    box-shadow: inset 3px 3px 3px rgba(0, 0, 0, 0.3);
   }
   .define-box.brown .define-input {
     background: rgba(255,255,255,0.7);
@@ -439,9 +445,11 @@ body::before {
  
   /* ── NAV BUTTONS ── */
   .nav-btns {
-    position: fixed;
+    position: absolute;
     bottom: 64px;
-    left: var(--sidebar-w, 64px); right: 64px;
+    /* left: var(--sidebar-w, 64px); right: 64px; */
+    left: calc(var(--sidebar-w) + 64px);
+    right: 64px;
     display: flex;
     justify-content: space-between;
     padding: 0 32px;
@@ -472,13 +480,14 @@ body::before {
  
   /* ── STEP INDICATOR ── */
   .step-dots {
-    position: fixed;
+    position: absolute;
     bottom: 36px;
-    left: 50%;
+    left: calc(var(--sidebar-w) + (100% - var(--sidebar-w)) / 2);
     transform: translateX(-50%);
     display: flex;
     gap: 8px;
     z-index: 60;
+    transition: 0.3s;
   }
   .dot {
     width: 8px; height: 8px;
