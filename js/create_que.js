@@ -4,18 +4,11 @@ let selectedTypes = new Set();
 let questionCounts = {};
 let marksData = {};
 
- 
-/* ── State ─────────────────────────────────────────────────────────── */
-// Add these to your existing state variables at the top of your JS:
-//
-//   let layeredSameOrDiff = 'same';        // 'same' | 'different'
-//   let layeredTotalMarks = 0;             // total marks per layered question
-//   let layeredDistributions = {};         // { 0: '1+2+3+4', 1: '2+3+5', ... }
-//   let layeredCurrentQIndex = 0;          // which question is shown in the carousel
-let layeredSameOrDiff    = 'same';
-let layeredTotalMarks    = 0;
-let layeredDistributions = {};
-let layeredCurrentQIndex = 0;
+
+let layeredSameOrDiff    = 'same'; // 'same' | 'different'
+let layeredTotalMarks    = 0;     // total marks per layered question
+let layeredDistributions = {};   // { 0: '1+2+3+4', 1: '2+3+5', ... }
+let layeredCurrentQIndex = 0;   // which question is shown in the carousel
  
 function toggleType(card) {
   const type = card.dataset.type;
@@ -35,6 +28,9 @@ function updateNextBtn() {
     nb.classList.toggle('hidden', selectedTypes.size === 0);
   }
 }
+
+/* ── Saved state for step-2 inputs (persists across Back navigation) ── */
+let savedStep2 = {};  // { count_mcq: '10', marks_mcq: '0.5', ... }
  
 function buildMarksLayout() {
   const layout = document.getElementById('marksLayout');
@@ -45,6 +41,18 @@ function buildMarksLayout() {
   types.forEach(type => {
     if (type === 'written-layer') {
       layout.appendChild(buildLayeredRow());
+      /* Restore layered state: toggle reflects current mode */
+      document.querySelectorAll('#layered-toggle .toggle-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.toLowerCase() === layeredSameOrDiff);
+      });
+      /* Restore count input */
+      const countEl = document.getElementById('count_written-layer');
+      if (countEl && savedStep2['count_written-layer']) {
+        countEl.value = savedStep2['count_written-layer'];
+      }
+      /* Re-render sub-rows if we already have a count */
+      const count = parseInt((countEl || {}).value) || 0;
+      if (count > 0) renderLayeredSecondRow();
       return;
     }
  
@@ -53,23 +61,26 @@ function buildMarksLayout() {
     if (type === 'written-no-layer') {
       leftLabel = 'How many Written\n(no layer)?';
       rightLabel = 'Marks Distribution';
-      rightPlaceholder = '2+2+3+3';
+      rightPlaceholder = '0+0+0+...';
     } else if (type === 'mcq') {
       leftLabel = 'How many MCQs?';
       rightLabel = 'Marks per each MCQ';
-      rightPlaceholder = '0.5';
+      rightPlaceholder = '0';
     } else if (type === 'truefalse') {
       leftLabel = 'How many True/False?';
       rightLabel = 'Marks per each T/F';
-      rightPlaceholder = '1';
+      rightPlaceholder = '0';
     }
+
+    const savedCount = savedStep2['count_' + type] || '';
+    const savedMarks = savedStep2['marks_' + type] || '';
  
     const row = document.createElement('div');
     row.className = 'pair-row';
     row.innerHTML = `
       <div class="define-box teal">
         <label>${leftLabel.replace('\n','<br>')}</label>
-        <input class="define-input" type="text" value="" placeholder="e.g., 4"
+        <input class="define-input" type="text" value="" placeholder="0"
           id="count_${type}" oninput="calcTotal()">
       </div>
       <div class="pair-arrow">
@@ -86,6 +97,23 @@ function buildMarksLayout() {
       </div>
     `;
     layout.appendChild(row);
+  });
+  calcTotal();
+}
+
+/* Call this before leaving step 2 so values survive Back navigation */
+function saveStep2State() {
+  selectedTypes.forEach(type => {
+    if (type === 'written-layer') {
+      const el = document.getElementById('count_written-layer');
+      if (el) savedStep2['count_written-layer'] = el.value;
+      /* layered-specific state is already kept in module-level vars */
+      return;
+    }
+    const cEl = document.getElementById('count_' + type);
+    const mEl = document.getElementById('marks_' + type);
+    if (cEl) savedStep2['count_' + type] = cEl.value;
+    if (mEl) savedStep2['marks_' + type] = mEl.value;
   });
 }
 
@@ -106,7 +134,7 @@ function buildLayeredRow() {
     <div class="define-box teal">
       <label>How many Written<br>(with layer)?</label>
       <div style="display:flex;align-items:center;gap:6px;">
-        <input class="define-input" type="text" value="" placeholder="e.g., 4"
+        <input class="define-input" type="text" value="" placeholder="0"
           id="count_written-layer"
           oninput="onLayeredCountChange()"
           style="flex:1;">
@@ -171,7 +199,7 @@ function renderLayeredSecondRow() {
           <div class="layered-card-title">Total Marks for<br>each layered Question</div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:8px;">
             <input class="define-input" type="text" value="${layeredTotalMarks || ''}"
-              id="layered-total-input" placeholder="e.g., 10"
+              id="layered-total-input" placeholder="0"
               oninput="onLayeredTotalChange()"
               style="flex:1;">
             <button class="layered-icon-btn dark" onclick="onLayeredTotalConfirm()" title="Confirm total">&#x2192;</button>
@@ -200,7 +228,7 @@ function renderLayeredSecondRow() {
         <div class="layered-card-title">Total Marks for<br>each layered Question</div>
         <div style="display:flex;align-items:center;gap:6px;margin-top:8px;">
           <input class="define-input" type="text" value="${layeredTotalMarks || ''}"
-            id="layered-total-input" placeholder="e.g., 10"
+            id="layered-total-input" placeholder="0"
             oninput="onLayeredTotalChange()"
             style="flex:1;">
           <button class="layered-icon-btn dark" onclick="onLayeredTotalConfirm()" title="Confirm total">&#x2192;</button>
@@ -296,6 +324,9 @@ function renderLayeredDistArea() {
    ══════════════════════════════════════════════════════════════════════ */
  
 function onLayeredCountChange() {
+  /* persist count into savedStep2 immediately */
+  const el = document.getElementById('count_written-layer');
+  if (el) savedStep2['count_written-layer'] = el.value;
   /* reset distributions when count changes */
   layeredDistributions = {};
   layeredCurrentQIndex = 0;
@@ -391,16 +422,15 @@ function calcTotal() {
 }
  
 function buildPreview() {
-  const inst = document.getElementById('instName').value;
-  const exam = document.getElementById('examName').value;
-  const year = document.getElementById('examYear').value;
-  const code = document.getElementById('courseCode').value;
-  const title = document.getElementById('courseTitle').value;
-  const dur = document.getElementById('durationInput').value;
-  const durUnit = document.getElementById('durationUnit').value;
+    const inst    = document.getElementById('instName').value;
+    const exam    = document.getElementById('examName').value;
+    const year    = document.getElementById('examYear').value;
+    const code    = document.getElementById('courseCode').value;
+    const title   = document.getElementById('courseTitle').value;
+    const dur     = document.getElementById('durationInput').value;
+    const durUnit = document.getElementById('durationUnit').value;
+    const total   = calcTotal();
 
-  const total = calcTotal();
- 
   let html = `
     <div class="inst">${inst}</div>
     <div class="exam-name">${exam}</div>
@@ -412,38 +442,55 @@ function buildPreview() {
     </div>
   `;
  
-  const writtenTypes = [...selectedTypes].filter(t => t.startsWith('written'));
-  if (writtenTypes.length > 0) {
-    html += `<div class="section-head">Written Part:</div>`;
-    function buildPreviewLayeredSection(html) {
-  const countEl = document.getElementById('count_written-layer');
-  const count   = parseInt(countEl ? countEl.value : 0) || 0;
-  if (count < 1) return html;
- 
-  html += `<div class="section-head">Written (Layered) Part:</div>`;
- 
-  for (let i = 0; i < count; i++) {
-    let dist;
-    if (layeredSameOrDiff === 'same') {
-      dist = layeredDistributions['shared'] || '';
-    } else {
-      dist = layeredDistributions[i] || '';
-    }
-    const parts  = dist.split('+').map(v => v.trim()).filter(Boolean);
-    const layers = parts.length || 1;
- 
-    html += `<div class="q-line"><strong>Q${i + 1}.</strong> [${layeredTotalMarks} marks total]</div>`;
-    for (let j = 0; j < layers; j++) {
-      const mark = parts[j] || '';
-      html += `<div class="q-line" style="padding-left:24px;">
-        <span>${String.fromCharCode(97 + j)}. ${'─'.repeat(36)}</span>
-        <span>${mark}</span>
-      </div>`;
+  /* ── Written (no layer) ── */
+  if (selectedTypes.has('written-no-layer')) {
+    const marksEl = document.getElementById('marks_written-no-layer') ||
+                    { value: savedStep2['marks_written-no-layer'] || '' };
+    const countEl = document.getElementById('count_written-no-layer') ||
+                    { value: savedStep2['count_written-no-layer'] || '0' };
+    const parts = (marksEl.value || '').split('+').map(v => v.trim()).filter(Boolean);
+    const count = parseInt(countEl.value) || parts.length || 0;
+    if (count > 0) {
+      const noLayerTotal = parts.reduce((a,b) => a + parseFloat(b||0), 0);
+      html += `<div class="section-head">Written Part: <span style="float:right;font-weight:400">${noLayerTotal} Marks</span></div>`;
+      for (let i = 0; i < count; i++) {
+        const mark = parts[i] || '';
+        html += `<div class="q-line">
+          <span>${i+1}. ${'─'.repeat(40)}</span>
+          <span>${mark}</span>
+        </div>`;
+      }
     }
   }
-  return html;
-}
+
+  /* ── Written (with layer) ── */
+  if (selectedTypes.has('written-layer')) {
+    const countEl = document.getElementById('count_written-layer') ||
+                    { value: savedStep2['count_written-layer'] || '0' };
+    const count = parseInt(countEl.value) || 0;
+    if (count > 0) {
+      const layerTotal = count * (layeredTotalMarks || 0);
+      html += `<div class="section-head">Written Part (Layered): <span style="float:right;font-weight:400">${layerTotal} Marks</span></div>`;
+      for (let i = 0; i < count; i++) {
+        const dist = layeredSameOrDiff === 'same'
+          ? (layeredDistributions['shared'] || '')
+          : (layeredDistributions[i] || '');
+        const parts = dist.split('+').map(v => v.trim()).filter(Boolean);
+        html += `<div class="layer-main-q">${i+1}. ${'─'.repeat(36)} <span class="layer-mark">[${layeredTotalMarks}]</span></div>`;
+        if (parts.length) {
+          parts.forEach((mark, j) => {
+            html += `<div class="layer-sub-q">
+              <span>${String.fromCharCode(97+j)}. ${'─'.repeat(32)}</span>
+              <span class="layer-mark">${mark}</span>
+            </div>`;
+          });
+        } else {
+          html += `<div class="layer-sub-q"><span>a. ${'─'.repeat(32)+'?'}</span></div>`;
+        }
+      }
+    }
   }
+
  
   if (selectedTypes.has('mcq')) {
     const mEl = document.getElementById('marks_mcq');
