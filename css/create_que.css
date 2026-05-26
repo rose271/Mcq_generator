@@ -45,12 +45,37 @@ body::before {
     padding-top: 20%;
 }
 
+html, body {
+  scroll-behavior: smooth;
+}
+
+/* Chrome, Edge, Safari */
+::-webkit-scrollbar {
+  width: 10px;              /* width of vertical scrollbar */
+  height: 10px;             /* height of horizontal scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(201, 199, 199, 0.201); /* track color */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--cream);  /* scrollbar handle color */
+  border-radius: 10px;
+  border: 2px solid var(--brown-lighter); /* adds padding effect */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--teal-dark);   /* hover effect */
+}
+
 
  /* ── MAIN CONTENT ── */
   .page-wrapper {
     position: relative;
     z-index: 10;
-    height: 100vh;
+    min-height: 100vh;
     width: 100vw;
     display: flex;
     align-items: center;
@@ -66,7 +91,10 @@ body::before {
     padding: 44px 56px 48px;
     width: 100%;
     max-width: 600px;
+    max-height: 80vh;     /* limit height to viewport */
+     overflow-y: auto;     /* enable scrolling inside */
     box-shadow: 0px 0px 40px rgba(10, 10, 10, 0.276);
+    scroll-behavior: smooth; /* smooth scrolling */
   }
  
   .card-title {
@@ -277,6 +305,128 @@ body::before {
     gap: 4px;
   }
   .pair-arrow svg { display: block; }
+
+  /* ═══════════════════════════════════════════════════════════════════
+   LAYERED WRITTEN QUESTION — CSS ADDITIONS
+   Append these rules to your existing stylesheet.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Same / Different toggle ───────────────────────────────────────── */
+.toggle-group {
+  display: inline-flex;
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 20px;
+  padding: 3px;
+  gap: 2px;
+  box-shadow: inset 2px 2px 4px rgba(0,0,0,0.15);
+  width: fit-content;
+}
+
+.toggle-btn {
+  background: transparent;
+  border: none;
+  border-radius: 18px;
+  padding: 5px 18px;
+  font-size: 13px;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+  color: var(--teal-dark);
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+
+.toggle-btn.active {
+  background: #fff;
+  color: var(--teal-darker);
+  box-shadow: 1px 1px 4px rgba(0,0,0,0.18);
+}
+
+.toggle-btn:hover:not(.active) {
+  background: rgba(255,255,255,0.35);
+}
+
+/* ── Arrow icon button inside teal box (→ confirm) ─────────────────── */
+.layered-icon-btn {
+  background: rgba(255, 255, 255, 0.25);
+  border: 1.5px solid rgba(255,255,255,0.5);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 16px;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.layered-icon-btn:hover {
+  background: rgba(255,255,255,0.4);
+}
+
+/* dark variant used inside brown/cream cards */
+.layered-icon-btn.dark {
+  background: rgba(132, 102, 66, 0.15);
+  border-color: var(--brown-light);
+  color: var(--teal-darker);
+}
+.layered-icon-btn.dark:hover {
+  background: rgba(132, 102, 66, 0.28);
+}
+
+/* ── Floating card used for total marks & distribution ─────────────── */
+.layered-card {
+  border-radius: 14px;
+  padding: 18px 24px;
+  min-width: 220px;
+  max-width: 320px;
+  width: 100%;
+}
+
+.layered-card.brown {
+  background: var(--brown-lighter);
+  border: 1.5px solid var(--brown-light);
+  box-shadow: 4px 4px 0px var(--brown);
+}
+
+.layered-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--teal-dark);
+  text-align: center;
+  line-height: 1.3;
+}
+
+.layered-card-sub {
+  font-size: 12px;
+  color: var(--text-mid);
+  text-align: center;
+  margin-top: 3px;
+}
+
+/* ── Carousel prev / next arrows ───────────────────────────────────── */
+.carousel-arrow {
+  background: none;
+  border: none;
+  font-size: 30px;
+  color: var(--teal);
+  cursor: pointer;
+  padding: 0 6px;
+  line-height: 1;
+  transition: color 0.15s, transform 0.15s;
+  flex-shrink: 0;
+}
+
+.carousel-arrow:hover:not(:disabled) {
+  color: var(--teal-darker);
+  transform: scale(1.15);
+}
+
+.carousel-arrow:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
  
   /* ── STEP 3: LAYOUT ── */
   .layout-meta {

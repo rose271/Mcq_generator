@@ -2,7 +2,7 @@
   width: var(--sidebar-w);
   min-width: var(--sidebar-w);
   height: 100vh;
-  background: var(--sidebar-bg);
+  background: hsl(197, 56%, 16%);
   display: flex;
   flex-direction: column;
   position: relative;
@@ -313,7 +313,7 @@
 .deco-rect-bottom-left {
   width: 80px;
   height: 80px;
-  background: #FF8600;
+  background: #ff8800;
   border-radius: 10px;
   bottom: 80px;
   left: -20px;

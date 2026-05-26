@@ -54,6 +54,7 @@
   updateInitials();
 }
 
+window.openSettingsModal = openSettings;   // ← add this line
 function closeSettings() {
   overlay.classList.remove('visible');
   document.body.style.overflow = '';

@@ -2,17 +2,133 @@
    ExamCraft — Download History  |  download.js
 ───────────────────────────────────────────── */
 
-const STORAGE_KEY  = 'examcraft_downloads';
-const SEED_VERSION = 'v1'; // bump when you change SEED_DATA
+/* ══════════════════════════════════════════
+   NAVBAR JS  (merged from navbar.html)
+══════════════════════════════════════════ */
+// ── Load settings modal fragment ──
+// ── Load settings modal fragment ──
+fetch('settings_modal.html')
+  .then(r => r.text())
+  .then(html => {
+    const clean = html
+      .replace(/<link[^>]*>/gi, '')
+      .replace(/<script[\s\S]*?<\/script>/gi, '');
+    document.getElementById('settings-modal-mount').innerHTML = clean;
 
-/* ══════════════════════════════════════════════
-   ✏️  ADD / EDIT YOUR FILES HERE
-   id   → unique string
-   name → display name
-   type → 'pdf' | 'docx' | 'xlsx'
-   size → MB as a number
-   date → 'YYYY-MM-DD'
-══════════════════════════════════════════════ */
+    // ← Load the JS only AFTER HTML is in the DOM
+    const script = document.createElement('script');
+    script.src = '../js/settings_modal.js';
+    document.body.appendChild(script);
+  })
+  .catch(err => console.error('Failed to load settings modal:', err));
+// ── Profile dropdown ──
+// ── Navbar auto-theme based on scroll position ──
+(function () {
+  const nav    = document.querySelector('nav');
+  const hero   = document.querySelector('.hero');
+
+  function updateNavTheme() {
+    if (!hero) {
+      nav.setAttribute('data-nav', 'light');
+      return;
+    }
+    // Switch to dark (white elements) while hero is still visible
+    const heroBottom = hero.getBoundingClientRect().bottom;
+    nav.setAttribute('data-nav', heroBottom > 0 ? 'dark' : 'light');
+  }
+
+  // Set immediately on load
+  updateNavTheme();
+
+  // Update on scroll
+  window.addEventListener('scroll', updateNavTheme, { passive: true });
+})();
+
+const profileBtn = document.getElementById('profileBtn');
+const dropdown   = document.getElementById('profileDropdown');   // ← matches download.html
+
+profileBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const open = dropdown.classList.toggle('show');
+  profileBtn.classList.toggle('open', open);
+  profileBtn.setAttribute('aria-expanded', open);
+});
+
+document.addEventListener('click', (e) => {
+  if (!profileBtn.contains(e.target) && !dropdown.contains(e.target)) {
+    dropdown.classList.remove('show');
+    profileBtn.classList.remove('open');
+    profileBtn.setAttribute('aria-expanded', 'false');
+  }
+});
+
+// close on Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    dropdown.classList.remove('show');
+    profileBtn.classList.remove('open');
+  }
+});
+// ── Settings modal trigger ──
+document.querySelectorAll('.dropdown-item, .mobile-menu a').forEach(item => {
+  if (item.textContent.trim() === 'Settings') {
+    item.addEventListener('click', e => {
+      e.preventDefault();
+      // close profile dropdown first
+      document.getElementById('profileDropdown')?.classList.remove('show');
+      document.getElementById('profileBtn')?.classList.remove('open');
+      // open modal
+      if (typeof window.openSettingsModal === 'function') {
+        window.openSettingsModal();
+      }
+    });
+  }
+});
+
+// ── Hamburger / mobile menu ──
+const hamburger  = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobileMenu');
+
+hamburger.addEventListener('click', () => {
+  hamburger.classList.toggle('open');
+  mobileMenu.classList.toggle('show');
+});
+
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 768) {
+    mobileMenu.classList.remove('show');
+    hamburger.classList.remove('open');
+  }
+});
+
+// ── Active nav link ──
+const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+
+document.querySelectorAll('.nav-links a, .mobile-menu a').forEach(link => {
+  // auto-highlight based on current filename
+  if (link.getAttribute('href') === currentPage) {
+    link.classList.add('active');
+  }
+  // also allow click-based switching
+  link.addEventListener('click', function () {
+    const isMobile = !!this.closest('.mobile-menu');
+    document.querySelectorAll(isMobile ? '.mobile-menu a' : '.nav-links a')
+            .forEach(l => l.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+// signal navbar is ready so download logic below can safely query navbar elements
+document.dispatchEvent(new CustomEvent('navbarReady'));
+
+
+/* ══════════════════════════════════════════
+   DOWNLOAD PAGE JS
+══════════════════════════════════════════ */
+
+const STORAGE_KEY  = 'examcraft_downloads';
+const SEED_VERSION = 'v1';
+
 const SEED_DATA = [
   { id: 'f1', name: 'Operating System Tutorial Question File',  type: 'pdf',  size: 2.2, date: '2026-10-24' },
   { id: 'f2', name: 'Data Structures — Mid-Term Exam Set A',    type: 'pdf',  size: 1.8, date: '2026-10-18' },
@@ -24,12 +140,10 @@ const SEED_DATA = [
 ];
 
 /* ── Persistence ── */
-// REPLACE the existing loadFiles() with this:
 function loadFiles() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      // First ever visit — seed with demo data
       localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_DATA));
       localStorage.setItem(STORAGE_KEY + '_version', SEED_VERSION);
       return [...SEED_DATA];
@@ -56,11 +170,10 @@ let activeType = 'all';
 /* ── DOM refs ── */
 const listEl    = document.getElementById('file-list');
 const emptyEl   = document.getElementById('empty-state');
-const searchEl  = document.getElementById('search-input');
 const badgeEl   = document.getElementById('badge-count');
 const toastEl   = document.getElementById('toast');
 const clearBtn  = document.getElementById('clear-all-btn');
-const cardTpl   = document.getElementById('file-card-template'); // ← HTML template
+const cardTpl   = document.getElementById('file-card-template');
 
 const statTotal  = document.getElementById('stat-total');
 const statRecent = document.getElementById('stat-recent');
@@ -81,30 +194,43 @@ function render() {
     emptyEl.classList.remove('hidden');
   } else {
     emptyEl.classList.add('hidden');
-    filtered.forEach((f, i) => listEl.appendChild(buildCard(f, i)));
+
+    // Group files by date, sorted most recent first
+    const groups = filtered.reduce((acc, f) => {
+      acc[f.date] = acc[f.date] || [];
+      acc[f.date].push(f);
+      return acc;
+    }, {});
+
+    const sortedDates = Object.keys(groups).sort((a, b) => new Date(b) - new Date(a));
+
+    let cardIndex = 0;
+    sortedDates.forEach(date => {
+      // Date header
+      const header = document.createElement('div');
+      header.className = 'date-group-header';
+      header.textContent = formatDate(date);
+      listEl.appendChild(header);
+
+      // Files under that date
+      groups[date].forEach(f => {
+        listEl.appendChild(buildCard(f, cardIndex++));
+      });
+    });
   }
 
   updateStats();
   updateBadge();
 }
-
-/* ── Card Builder ──────────────────────────────
-   Clones the <template> from download.html,
-   fills in text/classes, wires up buttons.
-   NO HTML strings here — edit the template tag
-   in download.html to change card structure.
-─────────────────────────────────────────────── */
+/* ── Card Builder ── */
 function buildCard(f, idx) {
-  // clone the template
   const clone = cardTpl.content.cloneNode(true);
   const card  = clone.querySelector('.file-card');
 
-  // set type class (drives strip colour + badge colour via CSS)
   card.classList.add(`type-${f.type}`);
   card.style.animationDelay = `${idx * 55}ms`;
   card.dataset.id = f.id;
 
-  // badge icon paths (defined here so HTML stays clean)
   const iconPaths = {
     pdf: `<path d="M5 3h7l4 4v10a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="currentColor" stroke-width="1.4"/>
           <path d="M12 3v4h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
@@ -117,11 +243,9 @@ function buildCard(f, idx) {
           <path d="M7 10h6M7 13h6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>`,
   };
 
-  // fill badge
-  card.querySelector('.badge-svg').innerHTML  = iconPaths[f.type] || iconPaths.pdf;
+  card.querySelector('.badge-svg').innerHTML     = iconPaths[f.type] || iconPaths.pdf;
   card.querySelector('.badge-label').textContent = f.type.toUpperCase();
 
-  // fill body
   const nameEl = card.querySelector('.file-card__name');
   nameEl.textContent = f.name;
   nameEl.title       = f.name;
@@ -130,9 +254,8 @@ function buildCard(f, idx) {
   card.querySelector('.meta-size').textContent = `${f.size} MB`;
   card.querySelector('.meta-date').textContent = formatDate(f.date);
 
-  // wire buttons
   card.querySelector('.btn-download').addEventListener('click', () => reDownload(f.id));
-  card.querySelector('.btn-copy').addEventListener('click',     () => copyName(f.id));
+  card.querySelector('.btn-open').addEventListener('click',     () => openFile(f.id));
   card.querySelector('.btn-remove').addEventListener('click',   () => removeFile(f.id));
 
   return card;
@@ -144,12 +267,10 @@ function reDownload(id) {
   if (f) showToast(`⬇ Re-downloading "${shortName(f.name)}"…`);
 }
 
-function copyName(id) {
+function openFile(id) {
   const f = files.find(x => x.id === id);
   if (!f) return;
-  navigator.clipboard.writeText(f.name)
-    .then(() => showToast('✓ Name copied to clipboard'))
-    .catch(() => showToast('Could not copy — try manually'));
+  showToast(`📄 Opening "${shortName(f.name)}"…`);
 }
 
 function removeFile(id) {
@@ -177,17 +298,23 @@ clearBtn.addEventListener('click', () => {
   showToast('History cleared');
 });
 
-/* ── Search ── */
-searchEl.addEventListener('input', e => {
-  query = e.target.value.trim();
-  render();
+/* ── Search (wired after navbarReady) ── */
+document.addEventListener('navbarReady', () => {
+  updateBadge();
+  const searchEl = document.getElementById('search-input1');
+  if (searchEl) {
+    searchEl.addEventListener('input', e => {
+      query = e.target.value.trim();
+      render();
+    });
+  }
 });
 
 document.addEventListener('keydown', e => {
   if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
     e.preventDefault();
-    searchEl.focus();
-    searchEl.select();
+    const searchEl = document.getElementById('search-input1');
+    if (searchEl) { searchEl.focus(); searchEl.select(); }
   }
 });
 
@@ -211,7 +338,6 @@ function updateStats() {
 
 function updateBadge() {
   if (badgeEl) badgeEl.textContent = files.length;
-  if (typeof updateSidebarBadge === 'function') updateSidebarBadge(files.length);
 }
 
 /* ── Toast ── */
@@ -239,3 +365,4 @@ function shortName(name) {
 
 /* ── Init ── */
 render();
+
