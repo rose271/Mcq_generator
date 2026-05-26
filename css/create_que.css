@@ -525,3 +525,87 @@ body::before {
   font-weight: 700;
   color: var(--teal-dark);
 }
+
+.export-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.45);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+
+.export-overlay.hidden{
+  display:none;
+}
+
+.export-modal{
+  width:520px;
+  background:#fff;
+  border-radius:24px;
+  padding:32px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.2);
+}
+
+.export-modal h2{
+  margin-bottom:24px;
+}
+
+.export-options{
+  display:flex;
+  gap:16px;
+}
+
+.export-card{
+  flex:1;
+  border:2px solid #ddd;
+  border-radius:18px;
+  padding:22px;
+  cursor:pointer;
+  text-align:center;
+  transition:0.25s ease;
+}
+
+.export-card:hover{
+  transform:translateY(-3px);
+}
+
+.export-card.active{
+  border-color:#1e5f74;
+  background:#f4fbfd;
+}
+
+.export-icon{
+  font-size:2rem;
+  margin-bottom:12px;
+}
+
+.export-title{
+  font-weight:700;
+}
+
+.export-sub{
+  font-size:0.85rem;
+  color:#666;
+}
+
+.export-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:12px;
+  margin-top:28px;
+}
+
+.cancel-btn,
+.download-btn{
+  border:none;
+  padding:12px 20px;
+  border-radius:12px;
+  cursor:pointer;
+}
+
+.download-btn{
+  background:#1e5f74;
+  color:#fff;
+}

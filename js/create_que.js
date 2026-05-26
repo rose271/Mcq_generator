@@ -287,8 +287,59 @@ function handleFile(input) {
   }
 }
  
+// function generate() {
+//   generateDocx();
+// }
+let selectedExportType = 'docx';
+
 function generate() {
-  generateDocx();
+
+  document
+    .getElementById('exportOverlay')
+    .classList.remove('hidden');
+
+}
+document.addEventListener('click', e => {
+
+  const card = e.target.closest('.export-card');
+
+  if (!card) return;
+
+  document
+    .querySelectorAll('.export-card')
+    .forEach(c => c.classList.remove('active'));
+
+  card.classList.add('active');
+
+  selectedExportType =
+    card.dataset.type;
+
+});
+
+function closeExportModal(){
+
+  document
+    .getElementById('exportOverlay')
+    .classList.add('hidden');
+
+}
+
+function startExport(){
+
+  closeExportModal();
+
+  if(selectedExportType === 'docx'){
+    generateDocx();
+  }
+
+  else if(selectedExportType === 'pdf'){
+    generatePDF();
+  }
+
+  else if(selectedExportType === 'xlsx'){
+    generateExcel();
+  }
+
 }
  
 // init

@@ -137,7 +137,55 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/docx@8.0.4/build/index.js"></script>
   <script src="../js/create_que.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="../js/generate_paper.js"></script>
   
+
+<div class="export-overlay hidden" id="exportOverlay">
+
+  <div class="export-modal">
+
+    <h2>Export Question Paper</h2>
+
+    <div class="export-options">
+
+      <div class="export-card active" data-type="docx">
+        <div class="export-icon">📄</div>
+        <div class="export-title">Word</div>
+        <div class="export-sub">.docx format</div>
+      </div>
+
+      <div class="export-card" data-type="pdf">
+        <div class="export-icon">📕</div>
+        <div class="export-title">PDF</div>
+        <div class="export-sub">Printable version</div>
+      </div>
+
+      <div class="export-card" data-type="xlsx">
+        <div class="export-icon">📊</div>
+        <div class="export-title">Excel</div>
+        <div class="export-sub">Spreadsheet format</div>
+      </div>
+
+    </div>
+
+    <div class="export-actions">
+
+      <button class="cancel-btn"
+        onclick="closeExportModal()">
+        Cancel
+      </button>
+
+      <button class="download-btn"
+        onclick="startExport()">
+        Download
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
 </body>
 </html>

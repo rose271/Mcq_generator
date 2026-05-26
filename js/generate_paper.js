@@ -14,6 +14,7 @@
 const COL_MARKS = ['1 Marks','2 Marks','3 Marks','4 Marks','5 Marks','6 Marks','7 Marks'];
 const COL_MCQ   = 'MCQ';
 const COL_TF    = 'T/F';
+let cachedRows = [];
 
 // ─── tiny diagnostic popup ───────────────────────────────────────────────────
 function err(msg) { alert('❌ ERROR:\n\n' + msg); }
@@ -62,20 +63,45 @@ function readExcelRows(file) {
   });
 }
 
+async function preparePaperContent() {
+
+  if(!window.generatedPDFHTML){
+
+    await generateDocx(true);
+
+  }
+
+  return {
+    pdfHTML: window.generatedPDFHTML || ''
+  };
+
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
-async function generateDocx() {
-  console.log('[generate] starting…');
+async function generateDocx(skipHistory = false) {  console.log('[generate] starting…');
+  window.generatedPDFHTML = '';
 
   // 1. Check dependencies
   if (typeof XLSX === 'undefined')    { err('XLSX library not loaded.\nAdd the SheetJS CDN <script> before generate_paper.js.'); return; }
   if (typeof saveAs === 'undefined')  { err('FileSaver not loaded.\nAdd the FileSaver CDN <script> before generate_paper.js.'); return; }
   if (typeof docx === 'undefined')    { err('docx library not loaded.\nAdd the docx CDN <script> (unpkg.com/docx@8.5.0) before generate_paper.js.'); return; }
 
-  // 2. Check file upload
-  const fileInput = document.getElementById('fileInput');
-  if (!fileInput || !fileInput.files || !fileInput.files.length) {
-    err('No Excel file uploaded.\nPlease click "Upload" and choose your question-bank .xlsx file.'); return;
-  }
+// 2. Check file upload OR cached data
+const fileInput = document.getElementById('fileInput');
+
+if (
+  (!fileInput || !fileInput.files || !fileInput.files.length)
+  &&
+  !cachedRows.length
+) {
+
+  err(
+    'No Excel file uploaded.\nPlease click "Upload" and choose your question-bank .xlsx file.'
+  );
+
+  return;
+
+}
 
   // 3. Collect UI values (with fallbacks so nothing crashes)
   const g = id => (document.getElementById(id) || {}).value || '';
@@ -111,14 +137,34 @@ async function generateDocx() {
 
   console.log('[generate] writtenSections', writtenSections, 'mcq', mcqCount, 'tf', tfCount);
 
-  // 5. Read Excel
-  let rows;
+// 5. Read Excel (or reuse cached rows)
+let rows = cachedRows;
+
+if(!rows.length){
+
   try {
+
     rows = await readExcelRows(fileInput.files[0]);
+
+    cachedRows = rows;
+
   } catch(ex) {
-    err('Could not read the Excel file:\n' + ex.message); return;
+
+    err('Could not read the Excel file:\n' + ex.message);
+
+    return;
+
   }
-  if (!rows.length) { err('Excel file appears empty.'); return; }
+
+}
+
+if (!rows.length) {
+
+  err('Excel file appears empty.');
+
+  return;
+
+}
 
   console.log('[generate] Excel rows:', rows.length, '| columns:', Object.keys(rows[0]));
 
@@ -202,7 +248,49 @@ async function generateDocx() {
   const docSections = [];
 
   for (let si = 0; si < numSets; si++) {
+    let pdfHTML = '';
     const children = [];
+
+pdfHTML += `
+  <div style="text-align:center; margin-bottom:20px;">
+
+    <h1 style="margin:0;">
+      ${inst}
+    </h1>
+
+    <h2 style="margin:6px 0 14px;">
+      ${examName}
+    </h2>
+
+    <div>
+      <strong>Duration:</strong>
+      ${dur} ${durUnit}
+
+      &nbsp;&nbsp;&nbsp;&nbsp;
+
+      <strong>Full Marks:</strong>
+      ${totalMarks}
+    </div>
+
+    <div style="margin-top:6px;">
+      <strong>Course Code:</strong>
+      ${courseCode}
+
+      &nbsp;&nbsp;&nbsp;&nbsp;
+
+      <strong>Course Title:</strong>
+      ${courseTitle}
+    </div>
+
+    <div style="margin-top:6px;">
+      <strong>Year:</strong>
+      ${examYear}
+    </div>
+
+    <hr style="margin-top:18px;">
+  </div>
+`;
+
     let secIdx = 0;
 
     // Header
@@ -250,7 +338,24 @@ for (const ws of writtenSections) {
       `Section ${lbl} — Written Questions   [Total: ${secTotal} Marks]`
     )
   );
+pdfHTML += `
+  <h2 style="
+    margin-top:28px;
+    border-bottom:1px solid #444;
+    padding-bottom:6px;
+  ">
+    Section ${lbl} — Written Questions
+    [Total: ${secTotal} Marks]
+  </h2>
 
+  <div style="
+    font-style:italic;
+    margin-bottom:16px;
+  ">
+    Answer all questions.
+    Marks are indicated beside each question.
+  </div>
+`;
   children.push(P([
     TR(
       'Answer all questions. Marks are indicated beside each question.',
@@ -294,27 +399,19 @@ for (const ws of writtenSections) {
         after:10
       }));
 
+      pdfHTML += `
+  <div style="margin-bottom:14px;">
+    <strong>${qi + 1}.</strong>
+    ${qText}
+    <strong>[${currentMark}]</strong>
+  </div>
+`;
+
       // answer lines
-      const lineCount =
-        Math.max(3, Math.round(currentMark * 2));
-
-      for (let l = 0; l < lineCount; l++) {
-
-        children.push(P([], {
-          borderBottom:true,
-          borderSize:2,
-          borderColor:'BBBBBB',
-          borderSpace:16,
-          before:0,
-          after:0
-        }));
-
-      }
-
-      children.push(P([], {
-        before:10,
-        after:16
-      }));
+  children.push(P([], {
+  before:4,
+  after:8
+}));
 
     }
 
@@ -364,6 +461,14 @@ for (const ws of writtenSections) {
         after:20
       }));
 
+      pdfHTML += `
+  <div style="margin-top:18px;">
+    <strong>${qi + 1}.</strong>
+    ${stimulus}
+    <strong>[${totalLayerMarks}]</strong>
+  </div>
+`;
+
       // layered subquestions
       ws.dist.forEach((neededMark, subIndex) => {
 
@@ -392,6 +497,13 @@ for (const ws of writtenSections) {
           before:50,
           after:8
         }));
+      pdfHTML += `
+  <div style="margin-left:30px;">
+    <strong>${letter})</strong>
+    ${subQ}
+    <strong>[${neededMark}]</strong>
+  </div>
+`;
 
       });
 
@@ -413,6 +525,23 @@ for (const ws of writtenSections) {
         const lbl      = SEC[secIdx++] || '?';
         const secTotal = (mcqMarks * mcqCount).toFixed(1);
         children.push(sectionHead(`Section ${lbl} — Multiple Choice   [${mcqMarks} × ${mcqCount} = ${secTotal} Marks]`));
+        pdfHTML += `
+  <h2 style="
+    margin-top:28px;
+    border-bottom:1px solid #444;
+    padding-bottom:6px;
+  ">
+    Section ${lbl} — Multiple Choice
+    [${mcqMarks} × ${mcqCount} = ${secTotal} Marks]
+  </h2>
+
+  <div style="
+    font-style:italic;
+    margin-bottom:16px;
+  ">
+    Circle the letter of the best answer.
+  </div>
+`;
         children.push(P([TR('Circle the letter of the best answer.', {italic:true})], { before:30, after:80 }));
 
         const chosen = pick(mcqPool, mcqCount, si*53);
@@ -435,6 +564,21 @@ for (const ws of writtenSections) {
               optRow([['C', item.c], ['D', item.d]]),
             ]
           }));
+
+          pdfHTML += `
+  <div style="margin-top:14px;">
+    <strong>${qi+1}.</strong>
+    ${item.q}
+
+    <div style="margin-left:20px; margin-top:6px;">
+      A. ${item.a}<br>
+      B. ${item.b}<br>
+      C. ${item.c}<br>
+      D. ${item.d}
+    </div>
+  </div>
+`;
+
           children.push(P([], { before:4, after:4 }));
         });
       }
@@ -448,6 +592,23 @@ for (const ws of writtenSections) {
         const lbl      = SEC[secIdx++] || '?';
         const secTotal = (tfMarks * tfCount).toFixed(1);
         children.push(sectionHead(`Section ${lbl} — True / False   [${tfMarks} × ${tfCount} = ${secTotal} Marks]`));
+        pdfHTML += `
+  <h2 style="
+    margin-top:28px;
+    border-bottom:1px solid #444;
+    padding-bottom:6px;
+  ">
+    Section ${lbl} — True / False
+    [${tfMarks} × ${tfCount} = ${secTotal} Marks]
+  </h2>
+
+  <div style="
+    font-style:italic;
+    margin-bottom:16px;
+  ">
+    Write "True" or "False" in the space provided.
+  </div>
+`;
         children.push(P([TR('Write "True" or "False" in the space provided.', {italic:true})], { before:30, after:80 }));
 
         pick(tfPool, tfCount, si*79).forEach((item, qi) => {
@@ -456,6 +617,17 @@ for (const ws of writtenSections) {
             TR(item.stmt),
             TR('    Answer: ___________', {color:'777777'}),
           ], { before:70, after:10 }));
+
+          pdfHTML += `
+  <div style="margin-top:10px;">
+    <strong>${qi+1}.</strong>
+    ${item.stmt}
+
+    <span style="color:#777;">
+      Answer: ___________
+    </span>
+  </div>
+`;
         });
       }
     }
@@ -465,7 +637,15 @@ for (const ws of writtenSections) {
       children.push(new Paragraph({ children:[new PageBreak()], spacing:{before:0,after:0} }));
     }
 
-    docSections.push({
+window.generatedPDFHTML += `
+  <div style="
+    ${si < numSets - 1 ? 'page-break-after:always;' : ''}
+  ">
+    ${pdfHTML}
+  </div>
+`;
+
+docSections.push({
       properties: {
         page: {
           size: { width:12240, height:15840 },
@@ -491,17 +671,26 @@ for (const ws of writtenSections) {
   }
 
   try {
-    const fname = `${courseCode || 'QuestionPaper'}_${examYear || new Date().getFullYear()}.docx`;
-    saveAs(blob, fname);
-    console.log('[generate] done →', fname);
+const fname = `${courseCode || 'QuestionPaper'}_${examYear || new Date().getFullYear()}.docx`;
 
-    // ── ✅ NEW: Save to Download History ──────────────────────────────────────
-    addToDownloadHistory({
-      name: fname.replace('.docx', ''),   // display name without extension
-      type: 'docx',
-      size: parseFloat((blob.size / (1024 * 1024)).toFixed(2)),  // MB
-      date: new Date().toISOString().split('T')[0],               // YYYY-MM-DD
-    });
+if(!skipHistory){
+
+  saveAs(blob, fname);
+
+}
+
+console.log('[generate] done →', fname);
+
+    if(!skipHistory){
+
+  addToDownloadHistory({
+    name: fname.replace('.docx', ''),
+    type: 'docx',
+    size: parseFloat((blob.size / (1024 * 1024)).toFixed(2)),
+    date: new Date().toISOString().split('T')[0],
+  });
+
+}
     // ─────────────────────────────────────────────────────────────────────────
 
   } catch(ex) {
@@ -545,5 +734,167 @@ function addToDownloadHistory(entry) {
   } catch(ex) {
     console.warn('[history] could not save to localStorage:', ex);
   }
+
+}
+
+async function generatePDF(){
+
+  const {
+    pdfHTML
+  } = await preparePaperContent();
+
+  const g = id =>
+    (document.getElementById(id) || {}).value || '';
+
+  const courseCode = g('courseCode');
+
+  const examYear = g('examYear');
+
+  // Create hidden printable container
+  const container =
+    document.createElement('div');
+
+  container.innerHTML = `
+    <div style="
+      padding:40px;
+      font-family:'Times New Roman';
+      color:#000;
+      line-height:1.8;
+      font-size:16px;
+    ">
+      ${pdfHTML}
+    </div>
+  `;
+
+  html2pdf()
+    .from(container)
+    .set({
+
+      margin:10,
+
+      filename:
+        `${courseCode || 'QuestionPaper'}_${examYear || new Date().getFullYear()}.pdf`,
+
+      html2canvas:{
+        scale:2
+      },
+
+      jsPDF:{
+        unit:'mm',
+        format:'a4',
+        orientation:'portrait'
+      }
+
+    })
+    .save()
+    .then(() => {
+
+      addToDownloadHistory({
+        name:
+          `${courseCode || 'QuestionPaper'}_${examYear || new Date().getFullYear()}`,
+        type:'pdf',
+        size:0,
+        date:new Date().toISOString().split('T')[0],
+      });
+
+    });
+
+}
+
+async function generateExcel(){
+
+  // Build content first
+  await preparePaperContent();
+
+  const wb = XLSX.utils.book_new();
+
+  const data = [];
+
+  // UI values
+  const g = id =>
+    (document.getElementById(id) || {}).value || '';
+
+  const inst        = g('instName');
+  const examName    = g('examName');
+  const courseCode  = g('courseCode');
+  const courseTitle = g('courseTitle');
+  const examYear    = g('examYear');
+
+  // Header info
+  data.push([inst]);
+  data.push([examName]);
+  data.push([]);
+
+  data.push([
+    'Course Code',
+    courseCode
+  ]);
+
+  data.push([
+    'Course Title',
+    courseTitle
+  ]);
+
+  data.push([
+    'Year',
+    examYear
+  ]);
+
+  data.push([]);
+
+  data.push([
+    'Generated Question Paper'
+  ]);
+
+  // Extract text from generated HTML
+  const temp =
+    document.createElement('div');
+
+  temp.innerHTML =
+    window.generatedPDFHTML || '';
+
+  const lines =
+    temp.innerText
+      .split('\n')
+      .map(v => v.trim())
+      .filter(Boolean);
+
+  lines.forEach(line => {
+
+    data.push([line]);
+
+  });
+
+  // Create worksheet
+  const ws =
+    XLSX.utils.aoa_to_sheet(data);
+
+  // Column width
+  ws['!cols'] = [
+    { wch: 120 }
+  ];
+
+  // Add sheet
+  XLSX.utils.book_append_sheet(
+    wb,
+    ws,
+    'Question Paper'
+  );
+
+  // Filename
+  const fname =
+    `${courseCode || 'QuestionPaper'}_${examYear || new Date().getFullYear()}.xlsx`;
+
+  // Download
+  XLSX.writeFile(wb, fname);
+
+  // Save history
+  addToDownloadHistory({
+    name:
+      fname.replace('.xlsx',''),
+    type:'xlsx',
+    size:0,
+    date:new Date().toISOString().split('T')[0],
+  });
 
 }
