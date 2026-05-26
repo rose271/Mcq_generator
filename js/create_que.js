@@ -620,10 +620,7 @@ function startExport(){
     generatePDF();
   }
 
-  else if(selectedExportType === 'xlsx'){
-    generateExcel();
-  }
-
+ 
 }
  
 // init
