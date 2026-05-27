@@ -80,7 +80,7 @@ function buildMarksLayout() {
     row.innerHTML = `
       <div class="define-box teal">
         <label>${leftLabel.replace('\n','<br>')}</label>
-        <input class="define-input" type="text" value="" placeholder="0"
+        <input class="define-input" type="text" value="${savedCount}" placeholder="0"
           id="count_${type}" oninput="calcTotal()">
       </div>
       <div class="pair-arrow">
@@ -92,7 +92,7 @@ function buildMarksLayout() {
       </div>
       <div class="define-box brown">
         <label style="color:var(--text-dark)">${rightLabel}</label>
-        <input class="define-input" type="text" value="" placeholder="${rightPlaceholder}"
+        <input class="define-input" type="text" value="${savedMarks}" placeholder="${rightPlaceholder}"
           id="marks_${type}" oninput="calcTotal()">
       </div>
     `;
@@ -269,7 +269,7 @@ function renderLayeredDistArea() {
           <div class="layered-card-title">Marks Distribution</div>
           <div class="layered-card-sub">Total marks: ${layeredTotalMarks}</div>
           <input class="define-input" type="text" value="${dist}"
-            placeholder="e.g., 1+2+3+4"
+            placeholder="e.g., 1+2+3+4 (optional)"
             id="layered-dist-shared"
             oninput="layeredDistributions['shared']=this.value; calcTotal();"
             style="margin-top:8px;">
@@ -306,7 +306,7 @@ function renderLayeredDistArea() {
         <div class="layered-card-title">Marks Distribution of Q-${idx + 1}</div>
         <div class="layered-card-sub">Total marks: ${layeredTotalMarks}</div>
         <input class="define-input" type="text" value="${dist}"
-          placeholder="e.g., 1+2+3+4"
+          placeholder="e.g., 1+2+3+4 (optional)"
           id="layered-dist-q${idx}"
           oninput="layeredDistributions[${idx}]=this.value; calcTotal();"
           style="margin-top:8px;">
@@ -525,12 +525,14 @@ function goNext() {
     generate();
     return;
   }
+  if (currentStep === 1) saveStep2State(); // persist before leaving step 2
   if (currentStep < totalSteps - 1) {
     showStep(currentStep + 1);
   }
 }
  
 function goBack() {
+  if (currentStep === 1) saveStep2State(); // persist before leaving step 2
   if (currentStep > 0) {
     showStep(currentStep - 1);
   }
@@ -577,7 +579,7 @@ function handleFile(input) {
 let selectedExportType = 'docx';
 
 function generate() {
-
+  saveStep2State(); // flush latest input values into savedStep2 before export
   document
     .getElementById('exportOverlay')
     .classList.remove('hidden');
@@ -623,5 +625,47 @@ function startExport(){
  
 }
  
+/* ══════════════════════════════════════════════════════════════════════
+   Enter-key navigation
+   Pressing Enter in any .define-input moves focus to the next one.
+   If there is no next input, it clicks the Next/Generate button.
+   ══════════════════════════════════════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const active = document.activeElement;
+  if (!active || !active.classList.contains('define-input')) return;
+
+  e.preventDefault();
+
+  // Collect all visible define-inputs in DOM order
+  const inputs = [...document.querySelectorAll('.define-input')]
+    .filter(el => el.offsetParent !== null); // only visible ones
+
+  const idx = inputs.indexOf(active);
+  if (idx !== -1 && idx < inputs.length - 1) {
+    inputs[idx + 1].focus();
+    inputs[idx + 1].select();
+  } else {
+    // Last input — trigger Next/Generate
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn && !nextBtn.classList.contains('hidden')) nextBtn.click();
+  }
+});
+
+/* Save layered dist inputs immediately on blur (they are dynamically
+   rendered and get destroyed on re-render, so oninput alone isn't enough) */
+document.addEventListener('focusout', e => {
+  const el = e.target;
+  if (!el || !el.id) return;
+  if (el.id === 'layered-dist-shared') {
+    layeredDistributions['shared'] = el.value;
+  } else if (el.id.startsWith('layered-dist-q')) {
+    const qi = parseInt(el.id.replace('layered-dist-q', ''));
+    if (!isNaN(qi)) layeredDistributions[qi] = el.value;
+  } else if (el.id === 'layered-total-input') {
+    layeredTotalMarks = parseFloat(el.value) || 0;
+  }
+});
+
 // init
 showStep(0);
