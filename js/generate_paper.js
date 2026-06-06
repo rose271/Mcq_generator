@@ -17,12 +17,10 @@ function err(msg)  { alert('❌ ERROR:\n\n' + msg); }
 function info(msg) { alert('ℹ️  ' + msg); }
 
 // ─── Seeded shuffle (different order per set) ────────────────────────────────
-function shuffled(arr, seed) {
+function shuffled(arr) {
   const a = [...arr];
-  let s = Math.abs(seed) || 1;
-  const rand = () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
+    const j = Math.floor(Math.random() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
@@ -30,17 +28,22 @@ function shuffled(arr, seed) {
 
 // ─── Pick N unique items from pool (no repeats, with used-set awareness) ─────
 // usedSet: Set of already-used question strings (mutated in place)
-// Falls back to full pool only if pool is exhausted
 function pickUnique(pool, n, seed, usedSet) {
-  if (!pool || !pool.length) return Array(n).fill('(No question available)');
+  if (!pool || !pool.length) return Array(n).fill('(No questions there)');
   const unused = pool.filter(q => !usedSet.has(q));
-  const src    = unused.length >= n ? unused : pool;
-  const rot    = shuffled(src, seed);
+  if (unused === 0) return Array(n).fill('(No unused questions available)');
+  const src    = shuffled(unused);
   const result = [];
   for (let i = 0; i < n; i++) {
-    const q = rot[i % rot.length];
-    result.push(q);
-    usedSet.add(q);
+    if(i < src.length)
+    {
+      const q = src[i];
+      result.push(q);
+      usedSet.add(q);
+    }
+    else{
+      result.push('(Not enough questions)');
+    }
   }
   return result;
 }
@@ -64,6 +67,7 @@ function readExcelRows(file) {
 
 // ─── Group Excel rows by stimulus (handles merged cells) ─────────────────────
 function buildLayeredGroups(rows) {
+  console.log(rows);
   const groups = [];
   let currentStimulus = null;
   let currentGroup    = [];
@@ -401,7 +405,7 @@ async function generateDocx(skipSave = false) {
 
       // Shuffle expanded dist once per set to randomise mark order
       const shuffledDist = ws.type === 'written-no-layer'
-        ? shuffled([...expandedDist], si * 137 + 29)
+        ? shuffled([...expandedDist])
         : null;
 
       for (let qi = 0; qi < ws.count; qi++) {
@@ -439,6 +443,7 @@ async function generateDocx(skipSave = false) {
 
             if (ws.sameOrDiff === 'different') {
               const validDists = [];
+              console.log(`layeredGroups: ${layeredGroups}`);
               layeredGroups.forEach(grp => {
                 const subPool    = buildSubPool(grp.rows);
                 const marksAvail = Object.keys(subPool).map(Number).sort((a,b)=>a-b);
@@ -460,7 +465,7 @@ async function generateDocx(skipSave = false) {
               });
 
               if (validDists.length) {
-                const pool = shuffled(validDists, si * 997 + 1);
+                const pool = shuffled(validDists);
                 qDist = pool[qi % pool.length];
               }
             }
@@ -487,7 +492,7 @@ async function generateDocx(skipSave = false) {
               }
 
               if (remaining === 0 && autoDist.length) {
-                qDist = shuffled(autoDist, si * 997 + qi * 53);
+                qDist = shuffled(autoDist);
               } else {
                 let rem2 = ws.totalMarks;
                 const fallback = [];
@@ -544,7 +549,7 @@ async function generateDocx(skipSave = false) {
             continue;
           }
 
-          const group    = shuffled(eligibleFinal, si * 997 + qi * 31)[0];
+          const group    = shuffled(eligibleFinal)[0];
           const stimulus = (group.stimulus || '').trim();
 
           usedGroupStimuli.add(group.stimulus || '__nostim__' + layeredGroups.indexOf(group));
@@ -607,7 +612,7 @@ async function generateDocx(skipSave = false) {
         children.push(P([TR('Circle the letter of the best answer.', { italic: true })], { before: 30, after: 80 }));
 
         const usedMCQ  = new Set();
-        const mcqItems = shuffled(mcqPool, si * 53);
+        const mcqItems = shuffled(mcqPool);
         const chosen   = [];
         for (const item of mcqItems) {
           if (!usedMCQ.has(item.q)) { usedMCQ.add(item.q); chosen.push(item); }
@@ -664,7 +669,7 @@ async function generateDocx(skipSave = false) {
         children.push(P([TR('Write "True" or "False" in the space provided.', { italic: true })], { before: 30, after: 80 }));
 
         const usedTF   = new Set();
-        const tfItems  = shuffled(tfPool, si * 79);
+        const tfItems  = shuffled(tfPool);
         const chosenTF = [];
         for (const item of tfItems) {
           if (!usedTF.has(item.stmt)) { usedTF.add(item.stmt); chosenTF.push(item); }
