@@ -5,7 +5,7 @@ let questionCounts = {};
 let marksData = {};
 
 
-let layeredSameOrDiff    = 'same'; // 'same' | 'different'
+let layeredSameOrDiff    = 'different'; // 'same' | 'different'
 let layeredTotalMarks    = 0;     // total marks per layered question
 let layeredDistributions = {};   // { 0: '1+2+3+4', 1: '2+3+5', ... }
 let layeredCurrentQIndex = 0;   // which question is shown in the carousel
@@ -155,8 +155,8 @@ function buildLayeredRow() {
         Will the marks for each layered question be same?
       </label>
       <div class="toggle-group" id="layered-toggle">
-        <button class="toggle-btn active" onclick="setLayeredMode('same')">Same</button>
-        <button class="toggle-btn"        onclick="setLayeredMode('different')">Different</button>
+        <button class="toggle-btn" onclick="setLayeredMode('same')">Same</button>
+        <button class="toggle-btn active" onclick="setLayeredMode('different')">Different</button>
       </div>
     </div>
   `;

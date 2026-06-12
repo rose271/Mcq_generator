@@ -138,7 +138,7 @@ async function generateDocx(skipSave = false) {
   // 1. Check dependencies
   if (typeof XLSX === 'undefined')   { err('XLSX library not loaded.\nAdd the SheetJS CDN <script> before generate_paper.js.'); return; }
   if (typeof saveAs === 'undefined') { err('FileSaver not loaded.\nAdd the FileSaver CDN <script> before generate_paper.js.'); return; }
-  if (typeof docx === 'undefined')   { err('docx library not loaded.\nAdd the docx CDN <script> (unpkg.com/docx@8.5.0) before generate_paper.js.'); return; }
+  if (typeof docx === 'undefined')   { err('docx library not loaded.\nAdd the docx CDN <script> (unpkg.com/docx@8.4.0) before generate_paper.js.'); return; }
 
   // 2. Check file upload OR cached data
   const fileInput = document.getElementById('fileInput');
@@ -156,7 +156,7 @@ async function generateDocx(skipSave = false) {
   const examYear    = g('examYear');
   const dur         = g('durationInput') || '30';
   const durUnit     = g('durationUnit')  || 'min';
-  const numSets     = Math.max(1, parseInt(g('numSets')) || 1);
+  const numSets     = Math.max(1, parseInt(g('numSets')) || 1); //logical OR operator returns LHS if its truthy otherwise returns RHS
 
   let totalMarks = 0;
   try { totalMarks = calcTotal(); } catch(e) { console.warn('calcTotal() failed', e); }
@@ -380,7 +380,7 @@ async function generateDocx(skipSave = false) {
       // Expand dist to exactly ws.count entries by cycling
       const expandedDist = ws.type === 'written-no-layer'
         ? Array.from({ length: ws.count }, (_, i) => ws.dist[i % ws.dist.length])
-        : null;
+        : null; 
 
       let secTotal = 0;
       if (ws.type === 'written-no-layer') {
@@ -404,6 +404,7 @@ async function generateDocx(skipSave = false) {
       const usedGroupStimuli = new Set();
 
       // Shuffle expanded dist once per set to randomise mark order
+      // seems useless
       const shuffledDist = ws.type === 'written-no-layer'
         ? shuffled([...expandedDist])
         : null;
@@ -443,7 +444,7 @@ async function generateDocx(skipSave = false) {
 
             if (ws.sameOrDiff === 'different') {
               const validDists = [];
-              console.log(`layeredGroups: ${layeredGroups}`);
+              console.log(layeredGroups);
               layeredGroups.forEach(grp => {
                 const subPool    = buildSubPool(grp.rows);
                 const marksAvail = Object.keys(subPool).map(Number).sort((a,b)=>a-b);
