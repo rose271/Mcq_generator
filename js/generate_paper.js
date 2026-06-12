@@ -238,7 +238,13 @@ async function generateDocx(skipSave = false) {
   const writtenPool = {};
   COL_MARKS.forEach((col, idx) => {
     const mark = idx + 1;
-    writtenPool[mark] = rows.map(r => (r[col] || '').toString().trim()).filter(Boolean);
+    writtenPool[mark] = rows.map(r => {
+      if(r['Stimulus (Case/Diagram/Table)']==='')
+      {
+        return  (r[col] || '').toString().trim();
+      }
+      return '';
+    }).filter(Boolean);
     console.log(`[pool] "${col}" → mark ${mark}: ${writtenPool[mark].length} questions`);
   });
 
