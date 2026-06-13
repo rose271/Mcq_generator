@@ -56,6 +56,19 @@ function readExcelRows(file) {
       try {
         const wb   = XLSX.read(e.target.result, { type: 'array' });
         const ws   = wb.Sheets[wb.SheetNames[0]];
+        // Fill merged cells
+        if (ws['!merges']) {
+          ws['!merges'].forEach(range => {
+            const startCell = XLSX.utils.encode_cell(range.s);
+            const value = ws[startCell] ? ws[startCell].v : '';
+            for (let r = range.s.r; r <= range.e.r; r++) {
+              let c = range.s.c;
+              const cellAddr = XLSX.utils.encode_cell({ r, c });
+              if (!ws[cellAddr]) ws[cellAddr] = { t: 's', v: value };
+              
+            }
+          });
+        }
         const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
         resolve(rows);
       } catch (ex) { reject(ex); }
@@ -84,7 +97,7 @@ function buildLayeredGroups(rows) {
       if (currentGroup.length && currentStimulus) {
         currentGroup.push(row);
       } else {
-        groups.push({ stimulus: '', rows: [row] });
+        // groups.push({ stimulus: '', rows: [row] });
         currentStimulus = null;
         currentGroup    = [];
       }
