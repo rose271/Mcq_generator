@@ -81,32 +81,21 @@ function readExcelRows(file) {
 // ─── Group Excel rows by stimulus (handles merged cells) ─────────────────────
 function buildLayeredGroups(rows) {
   console.log(rows);
-  const groups = [];
-  let currentStimulus = null;
-  let currentGroup    = [];
+  let subGroups  = {};
 
   rows.forEach(row => {
     const stim = (row['Stimulus (Case/Diagram/Table)'] || '').toString().trim();
-    if (stim) {
-      if (currentGroup.length) {
-        groups.push({ stimulus: currentStimulus, rows: currentGroup });
-      }
-      currentStimulus = stim;
-      currentGroup    = [row];
-    } else {
-      if (currentGroup.length && currentStimulus) {
-        currentGroup.push(row);
-      } else {
-        // groups.push({ stimulus: '', rows: [row] });
-        currentStimulus = null;
-        currentGroup    = [];
-      }
+    if(stim){
+        if(!subGroups[stim])
+            subGroups[stim]=[];
+        subGroups[stim].push(row);
     }
   });
-  if (currentGroup.length) {
-    groups.push({ stimulus: currentStimulus, rows: currentGroup });
-  }
 
+   const groups = Object.entries(subGroups).map(([stimulus, rows]) => ({
+    stimulus,
+    rows
+  }));
   console.log('[groups] total layered groups:', groups.length);
   return groups;
 }
