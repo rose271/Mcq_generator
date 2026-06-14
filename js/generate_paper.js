@@ -11,6 +11,7 @@ const COL_MARKS = ['1 Mark','2 Marks','3 Marks','4 Marks','5 Marks','6 Marks','7
 const COL_MCQ   = 'MCQ';
 const COL_TF    = 'T/F';
 let cachedRows  = [];
+const writtenPool = {};
 
 // ─── tiny diagnostic popup ───────────────────────────────────────────────────
 function err(msg)  { alert('❌ ERROR:\n\n' + msg); }
@@ -28,25 +29,34 @@ function shuffled(arr) {
 
 // ─── Pick N unique items from pool (no repeats, with used-set awareness) ─────
 // usedSet: Set of already-used question strings (mutated in place)
-function pickUnique(pool, n, seed, usedSet) {
-  if (!pool || !pool.length) return Array(n).fill('(No questions there)');
-  const unused = pool.filter(q => !usedSet.has(q));
-  if (unused === 0) return Array(n).fill('(No unused questions available)');
-  const src    = shuffled(unused);
-  const result = [];
-  for (let i = 0; i < n; i++) {
-    if(i < src.length)
-    {
-      const q = src[i];
-      result.push(q);
-      usedSet.add(q);
+function pickUnique(mark, n, usedSet) {
+    let pool;
+    if(Array.isArray(mark)) {pool = [...mark];}
+    else {pool = writtenPool[mark] || [];}
+
+    if (!pool || !pool.length) return Array(n).fill('(No questions there)');
+    const unused = pool.filter(q => !usedSet.has(q));
+    if (!unused.length) return Array(n).fill('(No unused questions available)');
+    const shuffledPool = shuffled(unused);
+    const result = [];
+    for (let i = 0; i < n; i++) {
+      if(i < shuffledPool.length)
+      {
+        const q = shuffledPool[i];
+        result.push(q);
+        usedSet.add(q);
+        // Only removing from writtenPool if we’re in the numeric mark case
+        if (!Array.isArray(mark)) {
+          const idx = writtenPool[mark].indexOf(q);
+          if (idx !== -1) writtenPool[mark].splice(idx, 1);
+        }
+      } else {
+        result.push('(Not enough questions)');
+      }
     }
-    else{
-      result.push('(Not enough questions)');
-    }
+    console.log("writtenPool: ", writtenPool);
+    return result;
   }
-  return result;
-}
 
 // ─── Read Excel file → array of row-objects ──────────────────────────────────
 function readExcelRows(file) {
@@ -237,7 +247,7 @@ async function generateDocx(skipSave = false) {
   console.log('[generate] Excel rows:', rows.length, '| columns:', Object.keys(rows[0]));
 
   // ── Build question pools ─────────────────────────────────────────────────
-  const writtenPool = {};
+  
   COL_MARKS.forEach((col, idx) => {
     const mark = idx + 1;
     writtenPool[mark] = rows.map(r => {
@@ -401,10 +411,10 @@ async function generateDocx(skipSave = false) {
       children.push(sectionHead(`Section ${lbl} — Written Questions   [Total: ${secTotal} Marks]`));
 
       pdfHTML += `
-  <h2 style="margin-top:28px; border-bottom:1px solid #444; padding-bottom:6px;">
-    Section ${lbl} — Written Questions [Total: ${secTotal} Marks]
-  </h2>
-  <div style="font-style:italic; margin-bottom:16px;">Answer all questions. Marks are indicated beside each question.</div>`;
+      <h2 style="margin-top:28px; border-bottom:1px solid #444; padding-bottom:6px;">
+        Section ${lbl} — Written Questions [Total: ${secTotal} Marks]
+      </h2>
+      <div style="font-style:italic; margin-bottom:16px;">Answer all questions. Marks are indicated beside each question.</div>`;
 
       children.push(P([TR('Answer all questions. Marks are indicated beside each question.', { italic: true })], { before: 30, after: 80 }));
 
@@ -413,9 +423,6 @@ async function generateDocx(skipSave = false) {
 
       // Shuffle expanded dist once per set to randomise mark order
       // seems useless
-      const shuffledDist = ws.type === 'written-no-layer'
-        ? shuffled([...expandedDist])
-        : null;
 
       for (let qi = 0; qi < ws.count; qi++) {
 
@@ -423,11 +430,12 @@ async function generateDocx(skipSave = false) {
            WRITTEN — NO LAYER
         ================================================================ */
         if (ws.type === 'written-no-layer') {
-          const currentMark = shuffledDist[qi];
+          const currentMark = expandedDist[qi];
           const pool        = writtenPool[currentMark] || [];
 
           if (!usedQByMark[currentMark]) usedQByMark[currentMark] = new Set();
-          const qText = pickUnique(pool, 1, si * 997 + qi * 31, usedQByMark[currentMark])[0];
+          const qText = pickUnique(currentMark, 1, usedQByMark[currentMark])[0];
+          console.log(`written-no-layer Question-${qi}:`,qText);
 
           // ★ MQ table-row → text cell + right-aligned marks cell
           children.push(MQ(
@@ -455,6 +463,7 @@ async function generateDocx(skipSave = false) {
               console.log(layeredGroups);
               layeredGroups.forEach(grp => {
                 const subPool    = buildSubPool(grp.rows);
+                console.log(subPool);
                 const marksAvail = Object.keys(subPool).map(Number).sort((a,b)=>a-b);
                 const find = (remaining, minMark, current) => {
                   if (remaining === 0 && current.length) {
@@ -472,10 +481,15 @@ async function generateDocx(skipSave = false) {
                 };
                 find(ws.totalMarks, 1, []);
               });
-
+              console.log("validDists");
+              console.log(validDists);
               if (validDists.length) {
                 const pool = shuffled(validDists);
+                console.log("pool");
+                console.log(pool);
                 qDist = pool[qi % pool.length];
+                console.log("qDist");
+                console.log(qDist);
               }
             }
 
@@ -543,7 +557,8 @@ async function generateDocx(skipSave = false) {
             qDist.forEach((neededMark, subIndex) => {
               const pool = writtenPool[neededMark] || [];
               if (!usedQByMark[neededMark]) usedQByMark[neededMark] = new Set();
-              const subQ   = pickUnique(pool, 1, si * 997 + qi * 31 + subIndex, usedQByMark[neededMark])[0];
+              const subQ   = pickUnique(neededMark, 1, usedQByMark[neededMark])[0];
+              console.log(`written-with-layer Question-${qi}:`,subQ);
               const letter = String.fromCharCode(97 + subIndex);
               // ★ MQ table — text left, marks right, indent on text only
               children.push(MQ(
@@ -587,9 +602,10 @@ async function generateDocx(skipSave = false) {
             if (!usedInThisQ[neededMark]) usedInThisQ[neededMark] = new Set();
             const pool = [...(subPool[neededMark] || [])];
             const subQ = pool.length
-              ? pickUnique(pool, 1, si * 997 + qi * 31 + subIndex * 7, usedInThisQ[neededMark])[0]
+              ? pickUnique(pool, 1, usedInThisQ[neededMark])[0]
               : `(No ${neededMark}-mark sub-question in this group)`;
             const letter = String.fromCharCode(97 + subIndex);
+            console.log(`written-with-layer (subPool) Question-${qi}:`,subQ);
 
             // ★ Sub-question — MQ table, indent 360, marks right-aligned in shared column
             children.push(MQ(
