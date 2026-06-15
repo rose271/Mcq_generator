@@ -307,28 +307,50 @@ async function generateDocx(skipSave = false) {
     children: Array.isArray(runs) ? runs : [TR(runs, opts)]
   });
 
-  // ── ★ Marked-Question row — two-cell table keeps text out of marks column ─
-  const MARKS_COL_W = 540;
-  const TEXT_COL_W  = W - MARKS_COL_W;
+  // ── Column widths for the 3-column question layout ───────────────────────
+  // [  NUM  ] [        SUB-QUESTION TEXT         ] [ MARKS ]
+  const NUM_COL_W   = 400;   // ~0.28" — holds "10." comfortably
+  const MARKS_COL_W = 540;   // ~0.375" — holds "[10]"
+  const TEXT_COL_W  = W - NUM_COL_W - MARKS_COL_W;
 
-  const MQ = (textRuns, marksRuns, opts = {}) => {
-    const indentAmt = opts.indent || 0;
-    const textPara  = new Paragraph({
+  /**
+   * MQ — 3-column table row for a question or sub-question.
+   *
+   * opts.numText   : string shown in the left number cell  (e.g. "6."  or "" for sub-questions)
+   * opts.subRuns   : TextRun[] for the sub-letter prefix   (e.g. [TR("a) ",{bold})])
+   * opts.marksRuns : TextRun[] for the right marks cell    (e.g. [TR("[4]",{bold})])  — pass [] to hide
+   * opts.before / opts.after : spacing in twips
+   */
+  const MQ = (numText, subRuns, bodyRuns, marksRuns, opts = {}) => {
+    const sp = { before: opts.before || 40, after: opts.after || 40 };
+
+    const numPara = new Paragraph({
       alignment: AlignmentType.LEFT,
-      spacing:   { before: opts.before || 40, after: opts.after || 40 },
-      indent:    indentAmt ? { left: indentAmt } : undefined,
-      children:  Array.isArray(textRuns) ? textRuns : [TR(textRuns, opts)]
+      spacing:   sp,
+      children:  [TR(numText || '', { bold: true })]
     });
+
+    const textPara = new Paragraph({
+      alignment: AlignmentType.LEFT,
+      spacing:   sp,
+      children:  [
+        ...(Array.isArray(subRuns)  ? subRuns  : []),
+        ...(Array.isArray(bodyRuns) ? bodyRuns : [TR(bodyRuns || '')])
+      ]
+    });
+
     const marksPara = new Paragraph({
       alignment: AlignmentType.RIGHT,
-      spacing:   { before: opts.before || 40, after: opts.after || 40 },
-      children:  marksRuns
+      spacing:   sp,
+      children:  Array.isArray(marksRuns) ? marksRuns : []
     });
+
     return new Table({
       width:        { size: W, type: WidthType.DXA },
-      columnWidths: [TEXT_COL_W, MARKS_COL_W],
+      columnWidths: [NUM_COL_W, TEXT_COL_W, MARKS_COL_W],
       borders:      { top: NONE_BORDER, bottom: NONE_BORDER, left: NONE_BORDER, right: NONE_BORDER, insideH: NONE_BORDER, insideV: NONE_BORDER },
       rows: [new TableRow({ children: [
+        noCell([numPara],   NUM_COL_W),
         noCell([textPara],  TEXT_COL_W),
         noCell([marksPara], MARKS_COL_W),
       ]})]
@@ -434,12 +456,18 @@ async function generateDocx(skipSave = false) {
           console.log(`written-no-layer Question-${qi}:`,qText);
 
           children.push(MQ(
-            [TR(`${qi + 1}. `, { bold: true }), TR(qText)],
+            `${qi + 1}.`,
+            [],
+            [TR(qText)],
             [TR(`[${currentMark}]`, { bold: true, color: '555555' })],
             { before: 100, after: 10 }
           ));
 
-          pdfHTML += `<div style="display:flex;justify-content:space-between;margin-bottom:14px;font-family:'Times New Roman';"><span><strong>${qi + 1}.</strong> ${qText}</span><strong>[${currentMark}]</strong></div>`;
+          pdfHTML += `<div style="display:table;width:100%;margin-bottom:14px;font-family:'Times New Roman';">
+  <span style="display:table-cell;width:28px;font-weight:bold;vertical-align:top;white-space:nowrap;">${qi + 1}.</span>
+  <span style="display:table-cell;vertical-align:top;">${qText}</span>
+  <strong style="display:table-cell;white-space:nowrap;text-align:right;padding-left:12px;vertical-align:top;">[${currentMark}]</strong>
+</div>`;
           children.push(P([], { before: 4, after: 8 }));
         }
 
@@ -566,25 +594,30 @@ async function generateDocx(skipSave = false) {
           );
 
           if (!eligible.length) {
-            // Fallback: independent questions per mark
-            children.push(MQ(
-              [TR(`${qi + 1}. `, { bold: true })],
-              [],
-              { before: 100, after: 10 }
-            ));
-            pdfHTML += `<div style="display:flex;justify-content:space-between;margin-top:18px;font-family:'Times New Roman';"><span><strong>${qi + 1}.</strong></span></div>`;
-
+            // Fallback: independent questions per mark, 3-column layout
+            // Number shows only on first row; subsequent sub-questions leave number col empty
             qDist.forEach((neededMark, subIndex) => {
               if (!usedQByMark[neededMark]) usedQByMark[neededMark] = new Set();
               const subQ   = pickUnique(neededMark, 1, usedQByMark[neededMark])[0];
               console.log(`written-with-layer (${neededMark}-mark) Question-${qi}:`,subQ);
               const letter = String.fromCharCode(97 + subIndex);
+              const numStr = subIndex === 0 ? `${qi + 1}.` : '';
+              const bef    = subIndex === 0 ? 100 : 30;
               children.push(MQ(
-                [TR(`${letter}) `, { bold: true }), TR(subQ)],
+                numStr,
+                [TR(`${letter}) `, { bold: true })],
+                [TR(subQ)],
                 [TR(`[${neededMark}]`, { bold: true, color: '555555' })],
-                { indent: 360, before: 50, after: 8 }
+                { before: bef, after: 8 }
               ));
-              pdfHTML += `<div style="display:flex;justify-content:space-between;margin-left:30px;font-family:'Times New Roman';"><span><strong>${letter})</strong> ${subQ}</span><strong>[${neededMark}]</strong></div>`;
+              const numHtml = subIndex === 0
+                ? `<span style="display:table-cell;width:28px;font-weight:bold;vertical-align:top;white-space:nowrap;">${qi + 1}.</span>`
+                : `<span style="display:table-cell;width:28px;vertical-align:top;"></span>`;
+              pdfHTML += `<div style="display:table;width:100%;margin-top:${subIndex === 0 ? 18 : 4}px;font-family:'Times New Roman';">
+  ${numHtml}
+  <span style="display:table-cell;vertical-align:top;"><strong>${letter})</strong> ${subQ}</span>
+  <strong style="display:table-cell;white-space:nowrap;text-align:right;padding-left:12px;vertical-align:top;">[${neededMark}]</strong>
+</div>`;
             });
 
             children.push(P([], { before: 10, after: 16 }));
@@ -597,14 +630,20 @@ async function generateDocx(skipSave = false) {
           usedGroupStimuli.add(group.stimulus || '__nostim__' + layeredGroups.indexOf(group));
           console.log("usedGroupStimuli: ", usedGroupStimuli);
 
-          // Parent question line — NO marks shown (sub-questions carry marks)
+          // Parent question line — stimulus text sits in the text column, number in num col, no marks
           if (stimulus) {
             children.push(MQ(
-              [TR(`${qi + 1}. `, { bold: true }), TR(stimulus)],
+              `${qi + 1}.`,
+              [],
+              [TR(stimulus)],
               [],
               { before: 100, after: 20 }
             ));
-            pdfHTML += `<div style="margin-top:18px;font-family:'Times New Roman';"><strong>${qi + 1}.</strong> ${stimulus}</div>`;
+            pdfHTML += `<div style="display:table;width:100%;margin-top:18px;font-family:'Times New Roman';">
+  <span style="display:table-cell;width:28px;font-weight:bold;vertical-align:top;white-space:nowrap;">${qi + 1}.</span>
+  <span style="display:table-cell;vertical-align:top;">${stimulus}</span>
+  <span style="display:table-cell;width:50px;"></span>
+</div>`;
           }
 
           const subPool = buildSubPool(group.rows);
@@ -618,23 +657,28 @@ async function generateDocx(skipSave = false) {
             const letter = String.fromCharCode(97 + subIndex);
             console.log(`written-with-layer (subPool) Question-${qi}:`,subQ);
 
-            if (!stimulus && subIndex === 0) {
-              // First sub-question: include the main number inline
-              children.push(MQ(
-                [TR(`${qi + 1}. ${letter}) `, { bold: true }), TR(subQ)],
-                [TR(`[${neededMark}]`, { bold: true, color: '555555' })],
-                { indent: 0, before: 100, after: 8 } // no extra indent
-              ));
-              pdfHTML += `<div style="display:table;width:100%;margin-top:18px;font-family:'Times New Roman';"><span style="display:table-cell;"><strong>${qi + 1}. ${letter})</strong> ${subQ}</span><strong style="display:table-cell;white-space:nowrap;text-align:right;padding-left:12px;vertical-align:top;">[${neededMark}]</strong></div>`;
-            } else {
-              // Subsequent sub-questions: just lettered
-              children.push(MQ(
-                [TR(`${letter}) `, { bold: true }), TR(subQ)],
-                [TR(`[${neededMark}]`, { bold: true, color: '555555' })],
-                { indent: 360, before: 50, after: 8 }
-              ));
-              pdfHTML += `<div style="display:table;width:100%;margin-left:30px;margin-top:4px;font-family:'Times New Roman';"><span style="display:table-cell;"><strong>${letter})</strong> ${subQ}</span><strong style="display:table-cell;white-space:nowrap;text-align:right;padding-left:12px;vertical-align:top;">[${neededMark}]</strong></div>`;
-            }           
+            // When no stimulus: number appears only on the first sub-question row
+            // When stimulus exists: number col is always empty (already shown above)
+            const numStr = (!stimulus && subIndex === 0) ? `${qi + 1}.` : '';
+            const bef    = (!stimulus && subIndex === 0) ? 100 : 30;
+
+            children.push(MQ(
+              numStr,
+              [TR(`${letter}) `, { bold: true })],
+              [TR(subQ)],
+              [TR(`[${neededMark}]`, { bold: true, color: '555555' })],
+              { before: bef, after: 8 }
+            ));
+
+            const numHtml = (!stimulus && subIndex === 0)
+              ? `<span style="display:table-cell;width:28px;font-weight:bold;vertical-align:top;white-space:nowrap;">${qi + 1}.</span>`
+              : `<span style="display:table-cell;width:28px;vertical-align:top;"></span>`;
+            const topMargin = (!stimulus && subIndex === 0) ? 18 : 4;
+            pdfHTML += `<div style="display:table;width:100%;margin-top:${topMargin}px;font-family:'Times New Roman';">
+  ${numHtml}
+  <span style="display:table-cell;vertical-align:top;"><strong>${letter})</strong> ${subQ}</span>
+  <strong style="display:table-cell;white-space:nowrap;text-align:right;padding-left:12px;vertical-align:top;">[${neededMark}]</strong>
+</div>`;
           });
 
           children.push(P([], { before: 10, after: 16 }));
