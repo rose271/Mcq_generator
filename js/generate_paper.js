@@ -540,11 +540,8 @@ async function generateDocx(skipSave = false) {
             groupSatisfiesDist(g.rows, qDist) &&
             !usedGroupStimuli.has(g.stimulus || '__nostim__' + layeredGroups.indexOf(g))
           );
-          const eligibleFinal = eligible.length
-            ? eligible
-            : layeredGroups.filter(g => groupSatisfiesDist(g.rows, qDist));
 
-          if (!eligibleFinal.length) {
+          if (!eligible.length) {
             // Fallback: independent questions per mark
             // Parent line — no marks shown at parent level
             children.push(MQ(
@@ -573,7 +570,7 @@ async function generateDocx(skipSave = false) {
             continue;
           }
 
-          const group    = shuffled(eligibleFinal)[0];
+          const group    = shuffled(eligible)[0];
           const stimulus = (group.stimulus || '').trim();
 
           usedGroupStimuli.add(group.stimulus || '__nostim__' + layeredGroups.indexOf(group));
