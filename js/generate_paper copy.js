@@ -45,7 +45,7 @@ function pickUnique(mark, n, usedSet) {
         const q = shuffledPool[i];
         result.push(q);
         usedSet.add(q);
-        // Only removing from writtenPool if we're in the numeric mark case
+        // Only removing from writtenPool if we’re in the numeric mark case
         if (!Array.isArray(mark)) {
           const idx = writtenPool[mark].indexOf(q);
           if (idx !== -1) writtenPool[mark].splice(idx, 1);
@@ -134,10 +134,11 @@ function groupSatisfiesDist(groupRows, dist) {
   return Object.entries(needed).every(([m, count]) => (pool[m] || []).length >= count);
 }
 
-// ─── PDF helper — FIXED: always regenerate so spec changes are picked up ─────
+// ─── PDF helper ───────────────────────────────────────────────────────────────
 async function preparePaperContent() {
-  // Always regenerate — do NOT cache the old HTML
-  await generateDocx(true);
+  if (!window.generatedPDFHTML) {
+    await generateDocx(true);
+  }
   return { pdfHTML: window.generatedPDFHTML || '' };
 }
 
@@ -167,7 +168,7 @@ async function generateDocx(skipSave = false) {
   const examYear    = g('examYear');
   const dur         = g('durationInput') || '30';
   const durUnit     = g('durationUnit')  || 'min';
-  const numSets     = Math.max(1, parseInt(g('numSets')) || 1);
+  const numSets     = Math.max(1, parseInt(g('numSets')) || 1); //logical OR operator returns LHS if its truthy otherwise returns RHS
 
   let totalMarks = 0;
   try { totalMarks = calcTotal(); } catch(e) { console.warn('calcTotal() failed', e); }
@@ -184,6 +185,7 @@ async function generateDocx(skipSave = false) {
                    .split('+').map(v => parseFloat(v.trim())).filter(v => !isNaN(v) && v > 0);
 
     if (cnt > 0 && dist.length > 0) {
+      // dist can have fewer entries than cnt — values cycle then shuffle per set
       writtenSections.push({ type: 'written-no-layer', count: cnt, dist });
     }
   }
@@ -245,9 +247,7 @@ async function generateDocx(skipSave = false) {
   console.log('[generate] Excel rows:', rows.length, '| columns:', Object.keys(rows[0]));
 
   // ── Build question pools ─────────────────────────────────────────────────
-  // FIXED: Reset writtenPool before rebuilding so repeated calls don't drain it
-  Object.keys(writtenPool).forEach(k => delete writtenPool[k]);
-
+  
   COL_MARKS.forEach((col, idx) => {
     const mark = idx + 1;
     writtenPool[mark] = rows.map(r => {
@@ -308,7 +308,9 @@ async function generateDocx(skipSave = false) {
   });
 
   // ── ★ Marked-Question row — two-cell table keeps text out of marks column ─
-  const MARKS_COL_W = 540;
+  // marksRuns: array of TextRuns for the marks label, e.g. [TR('[4]',{bold:true})]
+  // Pass marksRuns=[] to suppress the marks cell (used for parent question lines).
+  const MARKS_COL_W = 540;   // ~0.375 inch — enough for '[10]'
   const TEXT_COL_W  = W - MARKS_COL_W;
 
   const MQ = (textRuns, marksRuns, opts = {}) => {
@@ -370,11 +372,11 @@ async function generateDocx(skipSave = false) {
     // Header
     pdfHTML += `
   <div style="text-align:center; margin-bottom:20px;">
-    <div style="font-size:18pt; font-weight:bold; margin:0; font-family:'Times New Roman';">${inst}</div>
-    <div style="font-size:14pt; font-weight:bold; margin:6px 0 14px; font-family:'Times New Roman';">${examName}</div>
-    <div style="font-family:'Times New Roman';"><strong>Duration:</strong> ${dur} ${durUnit} &nbsp;&nbsp;&nbsp;&nbsp; <strong>Full Marks:</strong> ${totalMarks}</div>
-    <div style="margin-top:6px; font-family:'Times New Roman';"><strong>Course Code:</strong> ${courseCode} &nbsp;&nbsp;&nbsp;&nbsp; <strong>Course Title:</strong> ${courseTitle}</div>
-    <div style="margin-top:6px; font-family:'Times New Roman';"><strong>Year:</strong> ${examYear}</div>
+    <h1 style="margin:0;">${inst}</h1>
+    <h2 style="margin:6px 0 14px;">${examName}</h2>
+    <div><strong>Duration:</strong> ${dur} ${durUnit} &nbsp;&nbsp;&nbsp;&nbsp; <strong>Full Marks:</strong> ${totalMarks}</div>
+    <div style="margin-top:6px;"><strong>Course Code:</strong> ${courseCode} &nbsp;&nbsp;&nbsp;&nbsp; <strong>Course Title:</strong> ${courseTitle}</div>
+    <div style="margin-top:6px;"><strong>Year:</strong> ${examYear}</div>
     <hr style="margin-top:18px;">
   </div>`;
 
@@ -396,7 +398,7 @@ async function generateDocx(skipSave = false) {
       // Expand dist to exactly ws.count entries by cycling
       const expandedDist = ws.type === 'written-no-layer'
         ? Array.from({ length: ws.count }, (_, i) => ws.dist[i % ws.dist.length])
-        : null;
+        : null; 
 
       let secTotal = 0;
       if (ws.type === 'written-no-layer') {
@@ -408,18 +410,19 @@ async function generateDocx(skipSave = false) {
       const lbl = SEC[secIdx++] || '?';
       children.push(sectionHead(`Section ${lbl} — Written Questions   [Total: ${secTotal} Marks]`));
 
-      // FIXED: use styled <div> instead of <h2> to match docx font size (≈11.5pt / size:23)
       pdfHTML += `
-      <div style="margin-top:28px; border-bottom:1px solid #444; padding-bottom:6px; font-size:11.5pt; font-weight:bold; text-align:center; font-family:'Times New Roman';">
+      <h2 style="margin-top:28px; border-bottom:1px solid #444; padding-bottom:6px;">
         Section ${lbl} — Written Questions [Total: ${secTotal} Marks]
-      </div>
-      <div style="font-style:italic; margin-bottom:16px; font-family:'Times New Roman';">Answer all questions. Marks are indicated beside each question.</div>`;
+      </h2>
+      <div style="font-style:italic; margin-bottom:16px;">Answer all questions. Marks are indicated beside each question.</div>`;
 
       children.push(P([TR('Answer all questions. Marks are indicated beside each question.', { italic: true })], { before: 30, after: 80 }));
 
       const usedQByMark      = {};
       const usedGroupStimuli = new Set();
-      const usedInThisQ = {};
+
+      // Shuffle expanded dist once per set to randomise mark order
+      // seems useless
 
       for (let qi = 0; qi < ws.count; qi++) {
 
@@ -428,18 +431,20 @@ async function generateDocx(skipSave = false) {
         ================================================================ */
         if (ws.type === 'written-no-layer') {
           const currentMark = expandedDist[qi];
+          const pool        = writtenPool[currentMark] || [];
 
           if (!usedQByMark[currentMark]) usedQByMark[currentMark] = new Set();
           const qText = pickUnique(currentMark, 1, usedQByMark[currentMark])[0];
           console.log(`written-no-layer Question-${qi}:`,qText);
 
+          // ★ MQ table-row → text cell + right-aligned marks cell
           children.push(MQ(
             [TR(`${qi + 1}. `, { bold: true }), TR(qText)],
             [TR(`[${currentMark}]`, { bold: true, color: '555555' })],
             { before: 100, after: 10 }
           ));
 
-          pdfHTML += `<div style="display:flex;justify-content:space-between;margin-bottom:14px;font-family:'Times New Roman';"><span><strong>${qi + 1}.</strong> ${qText}</span><strong>[${currentMark}]</strong></div>`;
+          pdfHTML += `<div style="display:flex;justify-content:space-between;margin-bottom:14px;"><span><strong>${qi + 1}.</strong> ${qText}</span><strong>[${currentMark}]</strong></div>`;
           children.push(P([], { before: 4, after: 8 }));
         }
 
@@ -450,110 +455,81 @@ async function generateDocx(skipSave = false) {
           const entry  = ws.layerEntries[qi];
           let   qDist  = entry.dist;
 
-          // ── Auto-build dist if blank ──────────────────────────────────
+          // Auto-build dist if blank
           if (!qDist.length && ws.totalMarks > 0) {
 
-            // ── Max occurrences per mark value within one layered question ──
-            // Keeps low-mark questions from flooding a single parent question.
-            // Tweak these values to taste.
-            const MAX_OCCURRENCES = { 1: 1, 2: 2 };  // mark 1 → max 1 time, mark 2 → max 2 times
-            const DEFAULT_MAX     = 4;                // marks 3+ → max 4 times
-
-            // ── Check that writtenPool (non-layered bank) can satisfy a dist ──
-            // Used as a guard so we never accept a distribution we can't fill.
-            function poolCanSatisfy(dist) {
-              const needed = {};
-              dist.forEach(m => { needed[m] = (needed[m] || 0) + 1; });
-              return Object.entries(needed).every(
-                ([m, cnt]) => (writtenPool[Number(m)] || []).length >= cnt
-              );
-            }
-
-            // ── Recursive combination finder with per-mark occurrence cap ──
-            function findGoodDists(remaining, minMark, current, results, marksAvail) {
-              if (remaining === 0 && current.length >= 2) {
-                // Only accept if writtenPool can cover this distribution as fallback
-                if (poolCanSatisfy(current)) {
-                  const key = [...current].sort((a, b) => a - b).join('+');
-                  if (!results.find(d => [...d].sort((a, b) => a - b).join('+') === key))
-                    results.push([...current]);
-                }
-                return;
-              }
-              if (current.length >= 6) return;  // cap sub-questions per layered Q
-
-              for (const m of marksAvail) {
-                if (m < minMark || m > remaining) continue;
-                const maxAllowed = MAX_OCCURRENCES[m] !== undefined ? MAX_OCCURRENCES[m] : DEFAULT_MAX;
-                const usedCount  = current.filter(x => x === m).length;
-                if (usedCount >= maxAllowed) continue;
-                current.push(m);
-                findGoodDists(remaining - m, m, current, results, marksAvail);
-                current.pop();
-              }
-            }
-
-            // ── Gather marks available across all layered sub-pools ──
-            const availableMarksSet = new Set();
-            layeredGroups.forEach(grp => {
-              Object.keys(buildSubPool(grp.rows)).forEach(m => availableMarksSet.add(Number(m)));
-            });
-            const marksSorted = [...availableMarksSet].sort((a, b) => a - b);
-
-            const goodDists = [];
-
             if (ws.sameOrDiff === 'different') {
-              // In 'different' mode, also restrict to marks each group actually has
+              const validDists = [];
+              console.log(layeredGroups);
               layeredGroups.forEach(grp => {
                 const subPool    = buildSubPool(grp.rows);
-                const marksAvail = Object.keys(subPool).map(Number).sort((a, b) => a - b);
-                findGoodDists(ws.totalMarks, 1, [], goodDists, marksAvail);
+                console.log(subPool);
+                const marksAvail = Object.keys(subPool).map(Number).sort((a,b)=>a-b);
+                const find = (remaining, minMark, current) => {
+                  if (remaining === 0 && current.length) {
+                    const key = current.join('+');
+                    if (!validDists.find(d => d.join('+') === key)) validDists.push([...current]);
+                    return;
+                  }
+                  if (current.length >= 6) return;
+                  for (const m of marksAvail) {
+                    if (m < minMark || m > remaining) continue;
+                    current.push(m);
+                    find(remaining - m, m, current);
+                    current.pop();
+                  }
+                };
+                find(ws.totalMarks, 1, []);
               });
-            } else {
-              // 'same' mode: use union of all available marks
-              findGoodDists(ws.totalMarks, 1, [], goodDists, marksSorted);
+              console.log("validDists");
+              console.log(validDists);
+              if (validDists.length) {
+                const pool = shuffled(validDists);
+                console.log("pool");
+                console.log(pool);
+                qDist = pool[qi % pool.length];
+                console.log("qDist");
+                console.log(qDist);
+              }
             }
 
-            console.log('[auto-dist] goodDists found:', goodDists);
+            // SAME mode (or fallback): balanced dist from actual layered sub-pools
+            if (!qDist.length) {
+              const availableMarks = new Set();
+              layeredGroups.forEach(grp => {
+                Object.keys(buildSubPool(grp.rows)).forEach(m => availableMarks.add(Number(m)));
+              });
+              const marksSorted = [...availableMarks].sort((a, b) => b - a);
 
-            if (goodDists.length) {
-              // Prefer distributions with a higher average mark value —
-              // this naturally avoids too many 1- or 2-mark sub-questions.
-              // goodDists.sort((a, b) => {
-              //   const avgA = a.reduce((s, v) => s + v, 0) / a.length;
-              //   const avgB = b.reduce((s, v) => s + v, 0) / b.length;
-              //   return avgB - avgA;  // descending: prefer larger sub-marks
-              // });
-              // Pick from the top candidates at random for variety
-              // const topCandidates = shuffled(goodDists.slice(0, Math.min(goodDists.length, 10)));
-              const topCandidates = shuffled(goodDists);
-              qDist = topCandidates[qi % topCandidates.length];
-              console.log('[auto-dist] chosen qDist:', qDist);
-            }
+              let remaining = ws.totalMarks;
+              const autoDist = [];
 
-            // ── Fallback: greedy from highest marks if no good dist found ──
-            if (!qDist || !qDist.length) {
-              let rem = ws.totalMarks;
-              const fallback = [];
-              for (const m of [...marksSorted].reverse()) {
-                const maxAllowed = MAX_OCCURRENCES[m] !== undefined ? MAX_OCCURRENCES[m] : DEFAULT_MAX;
-                while (rem >= m && fallback.filter(x => x === m).length < maxAllowed) {
-                  fallback.push(m); rem -= m;
-                }
+              // Pass 1: use each mark at most twice (promotes variety)
+              for (const m of marksSorted) {
+                let used = 0;
+                while (remaining >= m && used < 2) { autoDist.push(m); remaining -= m; used++; }
               }
-              // If still can't reach target with caps, relax caps as last resort
-              if (rem !== 0) {
-                for (const m of [...marksSorted].reverse()) {
-                  while (rem >= m) { fallback.push(m); rem -= m; }
-                }
+              // Pass 2: fill remainder
+              for (const m of marksSorted) {
+                while (remaining >= m) { autoDist.push(m); remaining -= m; }
               }
-              if (rem === 0 && fallback.length) qDist = fallback;
+
+              if (remaining === 0 && autoDist.length) {
+                qDist = shuffled(autoDist);
+              } else {
+                let rem2 = ws.totalMarks;
+                const fallback = [];
+                for (const m of marksSorted) {
+                  while (rem2 >= m) { fallback.push(m); rem2 -= m; }
+                }
+                if (rem2 === 0) qDist = fallback;
+              }
             }
           }
 
-          if (!qDist || !qDist.length) {
+          if (!qDist.length) {
             children.push(P([TR(`${qi + 1}. (Cannot build sub-questions: no distribution defined and auto-resolve failed)`)], { before: 100, after: 10 }));
-            pdfHTML += `<div style="margin-bottom:14px;font-family:'Times New Roman';"><strong>${qi + 1}.</strong> (No distribution — skipped)</div>`;
+            pdfHTML += `<div style="margin-bottom:14px;"><strong>${qi + 1}.</strong> (No distribution — skipped)</div>`;
             continue;
           }
 
@@ -567,47 +543,57 @@ async function generateDocx(skipSave = false) {
 
           if (!eligible.length) {
             // Fallback: independent questions per mark
+            // Parent line — no marks shown at parent level
             children.push(MQ(
               [TR(`${qi + 1}. `, { bold: true })],
               [],
               { before: 100, after: 10 }
             ));
-            pdfHTML += `<div style="display:flex;justify-content:space-between;margin-top:18px;font-family:'Times New Roman';"><span><strong>${qi + 1}.</strong></span></div>`;
+            pdfHTML += `<div style="display:flex;justify-content:space-between;margin-top:18px;"><span><strong>${qi + 1}.</strong></span></div>`;
 
             qDist.forEach((neededMark, subIndex) => {
+              const pool = writtenPool[neededMark] || [];
               if (!usedQByMark[neededMark]) usedQByMark[neededMark] = new Set();
               const subQ   = pickUnique(neededMark, 1, usedQByMark[neededMark])[0];
               console.log(`written-with-layer (${neededMark}-mark) Question-${qi}:`,subQ);
               const letter = String.fromCharCode(97 + subIndex);
+              // ★ MQ table — text left, marks right, indent on text only
               children.push(MQ(
                 [TR(`${letter}) `, { bold: true }), TR(subQ)],
                 [TR(`[${neededMark}]`, { bold: true, color: '555555' })],
                 { indent: 360, before: 50, after: 8 }
               ));
-              pdfHTML += `<div style="display:flex;justify-content:space-between;margin-left:30px;font-family:'Times New Roman';"><span><strong>${letter})</strong> ${subQ}</span><strong>[${neededMark}]</strong></div>`;
+              pdfHTML += `<div style="display:flex;justify-content:space-between;margin-left:30px;"><span><strong>${letter})</strong> ${subQ}</span><strong>[${neededMark}]</strong></div>`;
             });
 
             children.push(P([], { before: 10, after: 16 }));
             continue;
           }
-          console.log("eligible: ", eligible);
+
           const group    = shuffled(eligible)[0];
           const stimulus = (group.stimulus || '').trim();
 
           usedGroupStimuli.add(group.stimulus || '__nostim__' + layeredGroups.indexOf(group));
-          console.log("usedGroupStimuli: ", usedGroupStimuli);
 
-          // Parent question line — NO marks shown (sub-questions carry marks)
+          // ★ Parent question line — NO marks shown (sub-questions carry marks)
           if (stimulus) {
             children.push(MQ(
               [TR(`${qi + 1}. `, { bold: true }), TR(stimulus)],
               [],
               { before: 100, after: 20 }
             ));
-            pdfHTML += `<div style="margin-top:18px;font-family:'Times New Roman';"><strong>${qi + 1}.</strong> ${stimulus}</div>`;
+            pdfHTML += `<div style="margin-top:18px;"><strong>${qi + 1}.</strong> ${stimulus}</div>`;
+          } else {
+            children.push(MQ(
+              [TR(`${qi + 1}. `, { bold: true })],
+              [],
+              { before: 100, after: 10 }
+            ));
+            pdfHTML += `<div style="margin-top:18px;"><strong>${qi + 1}.</strong></div>`;
           }
 
-          const subPool = buildSubPool(group.rows);
+          const subPool     = buildSubPool(group.rows);
+          const usedInThisQ = {};
 
           qDist.forEach((neededMark, subIndex) => {
             if (!usedInThisQ[neededMark]) usedInThisQ[neededMark] = new Set();
@@ -618,23 +604,13 @@ async function generateDocx(skipSave = false) {
             const letter = String.fromCharCode(97 + subIndex);
             console.log(`written-with-layer (subPool) Question-${qi}:`,subQ);
 
-            if (!stimulus && subIndex === 0) {
-              // First sub-question: include the main number inline
-              children.push(MQ(
-                [TR(`${qi + 1}. ${letter}) `, { bold: true }), TR(subQ)],
-                [TR(`[${neededMark}]`, { bold: true, color: '555555' })],
-                { indent: 0, before: 100, after: 8 } // no extra indent
-              ));
-              pdfHTML += `<div style="display:table;width:100%;margin-top:18px;font-family:'Times New Roman';"><span style="display:table-cell;"><strong>${qi + 1}. ${letter})</strong> ${subQ}</span><strong style="display:table-cell;white-space:nowrap;text-align:right;padding-left:12px;vertical-align:top;">[${neededMark}]</strong></div>`;
-            } else {
-              // Subsequent sub-questions: just lettered
-              children.push(MQ(
-                [TR(`${letter}) `, { bold: true }), TR(subQ)],
-                [TR(`[${neededMark}]`, { bold: true, color: '555555' })],
-                { indent: 360, before: 50, after: 8 }
-              ));
-              pdfHTML += `<div style="display:table;width:100%;margin-left:30px;margin-top:4px;font-family:'Times New Roman';"><span style="display:table-cell;"><strong>${letter})</strong> ${subQ}</span><strong style="display:table-cell;white-space:nowrap;text-align:right;padding-left:12px;vertical-align:top;">[${neededMark}]</strong></div>`;
-            }           
+            // ★ Sub-question — MQ table, indent 360, marks right-aligned in shared column
+            children.push(MQ(
+              [TR(`${letter}) `, { bold: true }), TR(subQ)],
+              [TR(`[${neededMark}]`, { bold: true, color: '555555' })],
+              { indent: 360, before: 50, after: 8 }
+            ));
+            pdfHTML += `<div style="display:flex;justify-content:space-between;margin-left:30px;"><span><strong>${letter})</strong> ${subQ}</span><strong>[${neededMark}]</strong></div>`;
           });
 
           children.push(P([], { before: 10, after: 16 }));
@@ -650,13 +626,11 @@ async function generateDocx(skipSave = false) {
         const lbl      = SEC[secIdx++] || '?';
         const secTotal = (mcqMarks * mcqCount).toFixed(1);
         children.push(sectionHead(`Section ${lbl} — Multiple Choice   [${mcqMarks} × ${mcqCount} = ${secTotal} Marks]`));
-
-        // FIXED: styled <div> instead of <h2> to match docx section header size
         pdfHTML += `
-  <div style="margin-top:28px; border-bottom:1px solid #444; padding-bottom:6px; font-size:11.5pt; font-weight:bold; text-align:center; font-family:'Times New Roman';">
+  <h2 style="margin-top:28px; border-bottom:1px solid #444; padding-bottom:6px;">
     Section ${lbl} — Multiple Choice [${mcqMarks} × ${mcqCount} = ${secTotal} Marks]
-  </div>
-  <div style="font-style:italic; margin-bottom:16px; font-family:'Times New Roman';">Circle the letter of the best answer.</div>`;
+  </h2>
+  <div style="font-style:italic; margin-bottom:16px;">Circle the letter of the best answer.</div>`;
         children.push(P([TR('Circle the letter of the best answer.', { italic: true })], { before: 30, after: 80 }));
 
         const usedMCQ  = new Set();
@@ -690,7 +664,7 @@ async function generateDocx(skipSave = false) {
           }));
 
           pdfHTML += `
-  <div style="margin-top:14px; font-family:'Times New Roman';">
+  <div style="margin-top:14px;">
     <strong>${qi + 1}.</strong> ${item.q}
     <div style="margin-left:20px; margin-top:6px;">
       A. ${item.a}<br>B. ${item.b}<br>C. ${item.c}<br>D. ${item.d}
@@ -709,13 +683,11 @@ async function generateDocx(skipSave = false) {
         const lbl      = SEC[secIdx++] || '?';
         const secTotal = (tfMarks * tfCount).toFixed(1);
         children.push(sectionHead(`Section ${lbl} — True / False   [${tfMarks} × ${tfCount} = ${secTotal} Marks]`));
-
-        // FIXED: styled <div> instead of <h2> to match docx section header size
         pdfHTML += `
-  <div style="margin-top:28px; border-bottom:1px solid #444; padding-bottom:6px; font-size:11.5pt; font-weight:bold; text-align:center; font-family:'Times New Roman';">
+  <h2 style="margin-top:28px; border-bottom:1px solid #444; padding-bottom:6px;">
     Section ${lbl} — True / False [${tfMarks} × ${tfCount} = ${secTotal} Marks]
-  </div>
-  <div style="font-style:italic; margin-bottom:16px; font-family:'Times New Roman';">Write "True" or "False" in the space provided.</div>`;
+  </h2>
+  <div style="font-style:italic; margin-bottom:16px;">Write "True" or "False" in the space provided.</div>`;
         children.push(P([TR('Write "True" or "False" in the space provided.', { italic: true })], { before: 30, after: 80 }));
 
         const usedTF   = new Set();
@@ -735,7 +707,7 @@ async function generateDocx(skipSave = false) {
             TR(item.stmt),
             TR('    Answer: ___________', { color: '777777' }),
           ], { before: 70, after: 10 }));
-          pdfHTML += `<div style="margin-top:10px; font-family:'Times New Roman';"><strong>${qi + 1}.</strong> ${item.stmt} <span style="color:#777;">Answer: ___________</span></div>`;
+          pdfHTML += `<div style="margin-top:10px;"><strong>${qi + 1}.</strong> ${item.stmt} <span style="color:#777;">Answer: ___________</span></div>`;
         });
       }
     }
@@ -831,7 +803,7 @@ async function generatePDF() {
 
   const container = document.createElement('div');
   container.innerHTML = `
-    <div style="padding:40px; font-family:'Times New Roman'; color:#000; line-height:1.8; font-size:11pt;">
+    <div style="padding:40px; font-family:'Times New Roman'; color:#000; line-height:1.8; font-size:16px;">
       ${pdfHTML}
     </div>`;
 
