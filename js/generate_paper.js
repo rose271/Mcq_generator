@@ -34,7 +34,7 @@ function pickUnique(mark, n, usedSet) {
     if(Array.isArray(mark)) {pool = [...mark];}
     else {pool = writtenPool[mark] || [];}
 
-    if (!pool || !pool.length) return Array(n).fill('(No questions there)');
+    if (!pool.length) return Array(n).fill('(No questions there)');
     const unused = pool.filter(q => !usedSet.has(q));
     if (!unused.length) return Array(n).fill('(No unused questions available)');
     const shuffledPool = shuffled(unused);
@@ -558,7 +558,7 @@ async function generateDocx(skipSave = false) {
               const pool = writtenPool[neededMark] || [];
               if (!usedQByMark[neededMark]) usedQByMark[neededMark] = new Set();
               const subQ   = pickUnique(neededMark, 1, usedQByMark[neededMark])[0];
-              console.log(`written-with-layer Question-${qi}:`,subQ);
+              console.log(`written-with-layer (${neededMark}-mark) Question-${qi}:`,subQ);
               const letter = String.fromCharCode(97 + subIndex);
               // ★ MQ table — text left, marks right, indent on text only
               children.push(MQ(
